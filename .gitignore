@@ -1,0 +1,7 @@
+# Byte-compiled / optimized / DLL files
+/.idea/*
+/.vscode/*
+/*.exe
+/*.db
+/ansible-runner
+/__debug_bin*

@@ -1,0 +1,16 @@
+server:
+  port: 8080
+playbook:
+  baseDir: "/etc/ansible/ansible-sid-operator"
+ansible:
+  baseDir: "/opt/stackstorm/virtualenvs/bin"
+  playbook: "ansible_playbook"
+  vault: "ansible_vault"
+  command: "ansible"
+  options:
+    - "-b"
+    - "--become-user=root"
+    - "--become-method=sudo"
+    - "--user=p4sautomation"
+job:
+  baseDir: "/var/vault/keypair"
