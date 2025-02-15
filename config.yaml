@@ -3,14 +3,15 @@ server:
 playbook:
   baseDir: "/etc/ansible/ansible-sid-operator"
 ansible:
-  baseDir: "/opt/stackstorm/virtualenvs/bin"
-  playbook: "ansible_playbook"
-  vault: "ansible_vault"
+  baseDir: "/opt/stackstorm/virtualenvs/ansible/bin"
+  playbook: "ansible-playbook"
+  vault: "ansible-vault"
   command: "ansible"
   options:
     - "-b"
     - "--become-user=root"
     - "--become-method=sudo"
     - "--user=p4sautomation"
+    - "--vault-password-file=vault-secret"
 job:
-  baseDir: "/var/vault/keypair"
+  baseDir: "/var/vault/key_pairs"

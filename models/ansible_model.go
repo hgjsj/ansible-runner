@@ -22,7 +22,7 @@ func NewAnsible(exe string) *Ansible {
 		// set abslute path for ansible
 		cmd = filepath.Join(viper.GetString("ansible.baseDir"), viper.GetString("ansible.playbook"))
 	}
-	return &Ansible{Cmd: cmd, Args: viper.GetStringSlice("ansible.args")}
+	return &Ansible{Cmd: cmd, Args: viper.GetStringSlice("ansible.options")}
 }
 
 // AnsibleJob represents a job that runs a playbook.

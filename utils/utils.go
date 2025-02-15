@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 )
@@ -11,6 +12,7 @@ func RunCommand(cwd string, cmd string, args ...string) (string, error) {
 	command.Dir = cwd
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
+	fmt.Println("Running command: ", command.String())
 	if err := command.Run(); err != nil {
 		return "", err
 	}

@@ -46,7 +46,7 @@ func GetPlaybooks(baseDir string) ([]string, error) {
 // RunPlaybook launches the specified playbook.
 func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 	var playbook = Playbook{Name: p, ProjectDir: viper.GetString("playbook.baseDir")}
-	var pre_job = Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
+	var preJob = Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
 	var inventory = models.NewInventory()
 	inventory.Groups = i.Groups
 	var ansible = models.NewAnsible("playbook")
@@ -67,12 +67,13 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 
 	
 	ansible.Args = append(ansible.Args, fmt.Sprintf("--inventory-file=%s", inventoryFile))
+	ansible.Args = append(ansible.Args, fmt.Sprintf("--extra-vars=job_dir=%s", filepath.Join(b, job.ID)))	
 	done := make(chan *models.AnsibleJob)
 
 	go func(job *models.AnsibleJob) {
 		job.Status = "preparing"
 		job.Playbook = playbook.Name
-		o, e := pre_job.Run(ansible)
+		o, e := preJob.Run(ansible)
 		if e != nil {
 			job.Status = "failed"
 			job.Error = e.Error()
