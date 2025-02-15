@@ -40,6 +40,7 @@ func LaunchPlaybook(c *gin.Context) {
 		return
 	}
 
+
 	job, err := services.RunPlaybook(requestBody.Playbook, requestBody.Inventory)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
