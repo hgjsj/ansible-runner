@@ -7,6 +7,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// JobResponse represents a job response
+type JobResponse struct {
+	ID     string 	`json:"id"`
+	Status string	`json:"status"`
+	Step   string   `json:"step"`
+	Output string   `json:"stdout"`
+	Err    string   `json:"stderr"`
+}
+
 // GetJob handles the retrieval of a job.
 func GetJob(c *gin.Context) {
 	id := c.Param("id")
@@ -15,5 +24,7 @@ func GetJob(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, job)
+
+	var responseJob = JobResponse{Status: job.Status, Step: job.Step, Output: job.Output, Err: job.Error}
+	c.JSON(http.StatusOK, responseJob)
 }

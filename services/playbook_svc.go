@@ -1,6 +1,7 @@
 package services
 
 import (
+	"ansible-runner/db"
 	"ansible-runner/models"
 	"ansible-runner/utils"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 type Playbook struct {
 	Name       string `json:"name"`
 	ProjectDir string `json:"project_dir"`
+	ExtraVars  []string
 }
 
 // Run executes the specified playbook.
@@ -53,8 +55,7 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 	job := new(models.AnsibleJob)
 	job.ID = uuid.New().String()
 	job.Status = "scheduled"
-	jobList[job.ID] = job
-
+	
 	var b = viper.GetString("job.baseDir")	
 	if err := os.MkdirAll(filepath.Join(b, job.ID), os.ModePerm); err != nil {
 		return nil, err
@@ -71,24 +72,26 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 	done := make(chan *models.AnsibleJob)
 
 	go func(job *models.AnsibleJob) {
-		job.Status = "preparing"
+		job.Status = "initializing"
 		job.Playbook = playbook.Name
+		job.Step = "Pre-job"
 		o, e := preJob.Run(ansible)
 		if e != nil {
 			job.Status = "failed"
 			job.Error = e.Error()
-			done <- job
 		} else {
 			job.Status = "prepared"
 			job.Output = o
 		}
+		db.MongoClient.PersistJob(job)
 		done <- job
 	}(job)
 
 	go func(job *models.AnsibleJob) {
 		<-done
-		if job.Status == "prepared" {
+		if job.Status == "initialized" {
 			job.Status = "running"
+			job.Step = "Job"
 			job.Playbook = playbook.Name
 			o, e := playbook.Run(ansible)
 			if e != nil {
@@ -98,7 +101,11 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 				job.Status = "completed"
 				job.Output = o
 			}
-		} 
+		} else{
+			job.Status = "failed"
+			job.Step = "Pre-job failed"
+		}
+		db.MongoClient.PersistJob(job)
 	}(job)
 
 	return job, nil

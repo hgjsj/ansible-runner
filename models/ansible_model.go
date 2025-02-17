@@ -31,7 +31,9 @@ type AnsibleJob struct {
 	Playbook string `json:"playbook"`
 	Status string `json:"status"`
 	Output string `json:"output"`
-	Error  string
+	Error  string `json:"error"`
+	Step   string `json:"step"`
+	Inventory Inventory
 }
 
 // AnsibleRunner is an interface for running Ansible playbooks.
