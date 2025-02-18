@@ -14,10 +14,6 @@ func RunCommand(cwd string, cmd string, args ...string) (string, error) {
 	command.Dir = cwd
 
 	fmt.Println("Running command: ", command.String())
-	err := command.Run()
-	if  err != nil {
-		return "", err
-	}
 	output, err := command.Output()
 	if err != nil {
         fmt.Println("Error is:", err)
@@ -28,6 +24,7 @@ func RunCommand(cwd string, cmd string, args ...string) (string, error) {
 
 }
 var encryptKey string = "WB6H!5BTX9-bA6@N-dsKLvWk6AYp#BUr"
+
 // Encrypt Encrypt an string using the provided key.
 func Encrypt(text string) (string, error) {
     block, err := aes.NewCipher([]byte(encryptKey))
