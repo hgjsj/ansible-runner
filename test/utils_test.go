@@ -1,8 +1,8 @@
 package test
 
 import (
-	"testing"
 	"ansible-runner/utils"
+	"testing"
 )
 
 func TestEncrypt(t *testing.T) {
@@ -33,5 +33,27 @@ func TestDecrypt(t *testing.T) {
 	}
 	t.Logf("Decrypted text %s = %s", cipherText, decryptedText)
 }
+func TestRunCommand(t *testing.T) {
+	cwd := "."
+	cmd := "echo"
+	args := []string{"hello world"}
 
+	output, err := utils.RunCommand(cwd, cmd, args...)
+	if err != nil {
+		t.Fatalf("RunCommand failed with error: %s", err)
+	}
+
+	if err != nil {
+		t.Errorf("RunCommand failed with error: %s", err)
+	}
+	t.Logf("RunCommand output: %s", output)
+
+	output, err = utils.RunCommand(cwd, "ls", "-l")
+	if err != nil {
+		t.Fatalf("RunCommand failed with error: %s", err)
+	} else {
+		t.Logf("RunCommand output: %s", output)
+	}
+	
+}
 

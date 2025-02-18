@@ -124,5 +124,7 @@ func (m *MongoDB) RetrieveJob(jobID string) (*models.AnsibleJob, error) {
 
 // Close closes the MongoDB connection.
 func (m *MongoDB) Close() {
-	m.mongoClient.Disconnect(context.Background())
+    if m.mongoClient != nil {
+	    m.mongoClient.Disconnect(m.c)
+    }
 }

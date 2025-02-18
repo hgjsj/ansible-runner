@@ -48,6 +48,6 @@ func LaunchPlaybook(c *gin.Context) {
 		})
 		return
 	}
-	var responseJob = JobResponse{Status: job.Status, Step: job.Step, Output: job.Output, Err: job.Error}
+	var responseJob = JobResponse{ID: job.ID,Status: job.Status, Step: job.Step, Output: job.Output, Err: job.Error}
 	c.JSON(http.StatusOK,responseJob)
 }

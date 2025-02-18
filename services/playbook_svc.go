@@ -1,7 +1,6 @@
 package services
 
 import (
-	"ansible-runner/db"
 	"ansible-runner/models"
 	"ansible-runner/utils"
 	"fmt"
@@ -72,7 +71,7 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 	done := make(chan *models.AnsibleJob)
 
 	go func(job *models.AnsibleJob) {
-		job.Status = "initializing"
+		job.Status = "preparing"
 		job.Playbook = playbook.Name
 		job.Step = "Pre-job"
 		o, e := preJob.Run(ansible)
@@ -83,13 +82,16 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 			job.Status = "prepared"
 			job.Output = o
 		}
-		db.MongoClient.PersistJob(job)
+		fmt.Println("start another job")
+		//db.NewMongoClient().PersistJob(job)
 		done <- job
 	}(job)
 
 	go func(job *models.AnsibleJob) {
+		fmt.Println("it is waiting")
 		<-done
-		if job.Status == "initialized" {
+		fmt.Printf("it is here %s", job.Status)
+		if job.Status == "prepared" {
 			job.Status = "running"
 			job.Step = "Job"
 			job.Playbook = playbook.Name
@@ -105,7 +107,7 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 			job.Status = "failed"
 			job.Step = "Pre-job failed"
 		}
-		db.MongoClient.PersistJob(job)
+		//db.NewMongoClient().PersistJob(job)
 	}(job)
 
 	return job, nil

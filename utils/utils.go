@@ -5,7 +5,6 @@ import (
 	"crypto/cipher"
 	"encoding/hex"
 	"fmt"
-	"os"
 	"os/exec"
 )
 
@@ -13,16 +12,17 @@ import (
 func RunCommand(cwd string, cmd string, args ...string) (string, error) {
 	command := exec.Command(cmd, args...)
 	command.Dir = cwd
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
+
 	fmt.Println("Running command: ", command.String())
 	if err := command.Run(); err != nil {
 		return "", err
 	}
 	output, err := command.Output()
 	if err != nil {
+        fmt.Println("Error is:", err)
 		return "", err
 	}
+	fmt.Println("output is: ", output)
 	return string(output), nil
 
 }
