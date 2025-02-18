@@ -95,6 +95,8 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 			job.Status = "running"
 			job.Step = "Job"
 			job.Playbook = playbook.Name
+			var signedCert = filepath.Join(b, job.ID, "p4s_signed_cert")
+			ansible.Args = append(ansible.Args, fmt.Sprintf("--private-key=%s", signedCert))
 			o, e := playbook.Run(ansible)
 			if e != nil {
 				job.Status = "failed"
