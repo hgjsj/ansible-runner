@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	configs.LoadConfig("./")
+	configs.LoadConfig("../")
 }
 
 func TestPersistJob(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 )
 
 func TestEncrypt(t *testing.T) {
-	plainText := "Hello, World!"
+	plainText := "p4sautomation"
 
 	cipherText, err := utils.Encrypt(plainText)
 	if err != nil {
@@ -16,7 +16,7 @@ func TestEncrypt(t *testing.T) {
 }
 
 func TestDecrypt(t *testing.T) {
-	plainText := "Hello, World!"
+	plainText := "p4sautomation"
 
 	cipherText, err := utils.Encrypt(plainText)
 	if err != nil {

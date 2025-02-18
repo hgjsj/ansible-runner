@@ -4,6 +4,7 @@ import (
 	"ansible-runner/models"
 	"ansible-runner/utils"
 	"context"
+	"fmt"
 
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
@@ -30,6 +31,9 @@ func NewMongoClient() *MongoDB {
 	MongoClient.c = context.Background()
 	var err error
 	uri := viper.GetString("mongodb.uri")
+    MongoClient.db = viper.GetString("mongodb.database")
+	MongoClient.jobCollection = viper.GetString("mongodb.jobCollection")
+
 	username := viper.GetString("mongodb.user")
 	password := viper.GetString("mongodb.password")
 	password, err = utils.Decrypt(password)
@@ -40,7 +44,13 @@ func NewMongoClient() *MongoDB {
 	credential := options.Credential{
 		Username: username,
 		Password: password,
+        AuthMechanism: "SCRAM-SHA-256",
+        AuthSource: MongoClient.db,
 	}
+    fmt.Println(credential.AuthSource)
+    fmt.Println(credential.Username)
+    fmt.Println(credential.Password)
+    fmt.Println(uri)
 	clientOptions := options.Client().ApplyURI(uri).SetAuth(credential)
 
 	MongoClient.mongoClient, err = mongo.Connect(MongoClient.c, clientOptions)
@@ -48,8 +58,7 @@ func NewMongoClient() *MongoDB {
 		panic(err)
 	}
 
-	MongoClient.db = viper.GetString("mongodb.database")
-	MongoClient.jobCollection = viper.GetString("mongodb.jobCollection")
+
 	databaseNames, err := MongoClient.mongoClient.ListDatabaseNames(MongoClient.c, bson.M{})
 	if err != nil {
 		panic(err)
@@ -93,16 +102,19 @@ func NewMongoClient() *MongoDB {
 
 // PersistJob saves the AnsibleJob to the database.
 func (m *MongoDB) PersistJob(job *models.AnsibleJob) error {
+    update := bson.M{
+        "$set": job,
+    }
 	updateOptions := options.Update().SetUpsert(true)
-	filter := bson.M{"ID": job.ID}
-	_, err := m.mongoClient.Database(m.db).Collection(m.jobCollection).UpdateOne(m.c, filter, job, updateOptions)
+	filter := bson.M{"id": job.ID}
+	_, err := m.mongoClient.Database(m.db).Collection(m.jobCollection).UpdateOne(m.c, filter, update, updateOptions)
 	return err
 }
 
 // RetrieveJob retrieves an AnsibleJob from the database by its ID.
 func (m *MongoDB) RetrieveJob(jobID string) (*models.AnsibleJob, error) {
 	var job models.AnsibleJob
-	filter := bson.M{"ID": jobID}
+	filter := bson.M{"id": jobID}
 	err := m.mongoClient.Database(m.db).Collection(m.jobCollection).FindOne(m.c, filter).Decode(&job)
 	if err != nil {
 		return nil, err

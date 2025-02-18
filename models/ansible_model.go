@@ -33,7 +33,7 @@ type AnsibleJob struct {
 	Output string `json:"output"`
 	Error  string `json:"error"`
 	Step   string `json:"step"`
-	Inventory Inventory
+	Inventory Inventory `json:"inventory"`
 }
 
 // AnsibleRunner is an interface for running Ansible playbooks.
