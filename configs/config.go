@@ -6,10 +6,10 @@ import (
 )
 
 // LoadConfig loads the application configuration.
-func LoadConfig() {
+func LoadConfig(p string) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("./")
+	viper.AddConfigPath(p)
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {

@@ -22,7 +22,10 @@ type MongoDB struct {
 // NewMongoDB creates a new MongoDB configuration.
 var MongoClient *MongoDB
 
-func init() {
+func NewMongoClient() *MongoDB {
+    if MongoClient != nil {
+        return MongoClient
+    }
 	MongoClient = new(MongoDB)
 	MongoClient.c = context.Background()
 	var err error
@@ -85,6 +88,7 @@ func init() {
 			panic(err)
 		}
 	}
+    return MongoClient
 }
 
 // PersistJob saves the AnsibleJob to the database.

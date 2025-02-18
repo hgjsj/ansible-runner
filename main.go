@@ -7,6 +7,6 @@ import (
 
 func main() {
 
-	configs.LoadConfig()
+	configs.LoadConfig("./")
 	routers.Server()
 }
