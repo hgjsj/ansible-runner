@@ -14,7 +14,8 @@ func RunCommand(cwd string, cmd string, args ...string) (string, error) {
 	command.Dir = cwd
 
 	fmt.Println("Running command: ", command.String())
-	if err := command.Run(); err != nil {
+	err := command.Run()
+	if  err != nil {
 		return "", err
 	}
 	output, err := command.Output()
@@ -22,7 +23,7 @@ func RunCommand(cwd string, cmd string, args ...string) (string, error) {
         fmt.Println("Error is:", err)
 		return "", err
 	}
-	fmt.Println("output is: ", output)
+	fmt.Println("output is: ", string(output))
 	return string(output), nil
 
 }
