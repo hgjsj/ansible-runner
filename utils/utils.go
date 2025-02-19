@@ -13,13 +13,12 @@ func RunCommand(cwd string, cmd string, args ...string) (string, error) {
 	command := exec.Command(cmd, args...)
 	command.Dir = cwd
 
-	fmt.Println("Running command: ", command.String())
+	Log.Info(fmt.Sprintf("Running command: %s", command.String()))
 	output, err := command.Output()
 	if err != nil {
-        fmt.Println("Error is:", err)
+		Log.Error(err.Error())
 		return "", err
 	}
-	fmt.Println("output is: ", string(output))
 	return string(output), nil
 
 }
@@ -29,6 +28,7 @@ var encryptKey string = "WB6H!5BTX9-bA6@N-dsKLvWk6AYp#BUr"
 func Encrypt(text string) (string, error) {
     block, err := aes.NewCipher([]byte(encryptKey))
     if err != nil {
+		Log.Error(err.Error())
         return "", err
     }
 
@@ -43,11 +43,13 @@ func Encrypt(text string) (string, error) {
 func Decrypt(encryptedText string) (string, error) {
     ciphertext, err := hex.DecodeString(encryptedText)
     if err != nil {
+		Log.Error(err.Error())
         return "", err
     }
 
     block, err := aes.NewCipher([]byte(encryptKey))
     if err != nil {
+		Log.Error(err.Error())
         return "", err
     }
 

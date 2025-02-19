@@ -24,6 +24,7 @@ func (p *Playbook) Run(a *models.Ansible) (string, error) {
 	args := append(a.Args, p.Name)
 	output, err := utils.RunCommand(p.ProjectDir, a.Cmd, args...)
 	if err != nil {
+		utils.Log.Error(err.Error())
 		return "", err
 	}
 	return output, nil
@@ -33,6 +34,7 @@ func (p *Playbook) Run(a *models.Ansible) (string, error) {
 func GetPlaybooks(baseDir string) ([]string, error) {
 	files, err := os.ReadDir(baseDir)
 	if err != nil {
+		utils.Log.Error(err.Error())
 		return nil, err
 	}
 	var playbooks []string
@@ -58,11 +60,13 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 	
 	var b = viper.GetString("job.baseDir")	
 	if err := os.MkdirAll(filepath.Join(b, job.ID), os.ModePerm); err != nil {
+		utils.Log.Error(err.Error())
 		return nil, err
 	}
 
 	var inventoryFile = filepath.Join(b, job.ID, "hosts.yml")
 	if err := inventory.ToYaml(inventoryFile); err != nil {
+		utils.Log.Error(err.Error())
 		return nil, err
 	}
 
@@ -99,6 +103,7 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 			ansible.Args = append(ansible.Args, fmt.Sprintf("--private-key=%s", signedCert))
 			o, e := playbook.Run(ansible)
 			if e != nil {
+				utils.Log.Error(e.Error())
 				job.Status = "failed"
 				job.Error = e.Error()
 			} else {
@@ -108,6 +113,7 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 		} else{
 			job.Status = "failed"
 			job.Step = "Pre-job failed"
+			utils.Log.Error("Run Pre-Job failed")
 		}
 		db.NewMongoClient().PersistJob(job)
 	}(job)

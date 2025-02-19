@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"ansible-runner/services"
+	"ansible-runner/utils"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,10 +23,11 @@ func GetJob(c *gin.Context) {
 	id := c.Param("id")
 	job, err := services.GetJob(id)
 	if err != nil {
+		utils.Log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
+	utils.Log.Info(fmt.Sprintf("Get job %s and response", job.ID))
 	var responseJob = JobResponse{ID: job.ID, Status: job.Status, Step: job.Step, Output: job.Output, Err: job.Error}
 	c.JSON(http.StatusOK, responseJob)
 }

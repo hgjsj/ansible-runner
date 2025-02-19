@@ -1,8 +1,9 @@
 package configs
 
 import (
+	"ansible-runner/utils"
+
 	"github.com/spf13/viper"
-	"log"
 )
 
 // LoadConfig loads the application configuration.
@@ -13,6 +14,8 @@ func LoadConfig(p string) {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error reading config file, %s", err)
+		utils.Log.Error(err.Error())
 	}
 }
+
+

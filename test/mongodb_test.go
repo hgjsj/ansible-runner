@@ -28,12 +28,6 @@ func TestPersistJob(t *testing.T) {
 
 func TestRetrieveJob(t *testing.T) {
 	cli := db.NewMongoClient()
-
-	job := new(models.AnsibleJob)
-	job.ID = "unit-test"
-	job.Status = "scheduled"
-	job.Step = ""
-	job.Playbook = "pre_job_run.yml"
 	if job, err := cli.RetrieveJob("unit-test"); err != nil {
 		t.Fatalf("get doc to mongodb failed with err %s", err.Error())
 	} else {

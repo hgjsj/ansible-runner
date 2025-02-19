@@ -5,3 +5,5 @@
 /*.db
 /ansible-runner
 /__debug_bin*
+/logs/*
+/*.log

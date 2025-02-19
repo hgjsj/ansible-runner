@@ -2,12 +2,18 @@ package routers
 
 import (
 	"ansible-runner/controllers"
+	"ansible-runner/utils"
+	"context"
+	"fmt"
+	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
 
+var srv *http.Server
 // Server initializes the Gin router and sets up the routes.
 func Server() {
 	r := gin.Default()
@@ -15,5 +21,23 @@ func Server() {
 	r.POST("/playbook/launch", controllers.LaunchPlaybook)
 	r.GET("/job/:id", controllers.GetJob)
 	port := strconv.Itoa(viper.GetInt("server.port"))
-	r.Run(":" + port) // listen and serve on configured port
+	utils.Log.Info(fmt.Sprintf("Server start and listen on port %s", port))
+	//r.Run(":" + port) // listen and serve on configured port
+	srv = new(http.Server)
+	srv.Addr =  ":8080"
+	srv.Handler = r
+
+	go func(){
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Printf("listen: %s\n", err)
+		}
+	}()
+}
+
+func ShutDown(){
+	if srv != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		srv.Shutdown(ctx)
+	}
 }

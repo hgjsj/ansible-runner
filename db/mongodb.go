@@ -4,8 +4,6 @@ import (
 	"ansible-runner/models"
 	"ansible-runner/utils"
 	"context"
-	"fmt"
-
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -38,6 +36,7 @@ func NewMongoClient() *MongoDB {
 	password := viper.GetString("mongodb.password")
 	password, err = utils.Decrypt(password)
 	if err != nil {
+        utils.Log.Error(err.Error())
 		panic(err)
 	}
 
@@ -47,20 +46,18 @@ func NewMongoClient() *MongoDB {
         AuthMechanism: "SCRAM-SHA-256",
         AuthSource: MongoClient.db,
 	}
-    fmt.Println(credential.AuthSource)
-    fmt.Println(credential.Username)
-    fmt.Println(credential.Password)
-    fmt.Println(uri)
 	clientOptions := options.Client().ApplyURI(uri).SetAuth(credential)
 
 	MongoClient.mongoClient, err = mongo.Connect(MongoClient.c, clientOptions)
 	if err != nil {
+        utils.Log.Error(err.Error())
 		panic(err)
 	}
 
 
 	databaseNames, err := MongoClient.mongoClient.ListDatabaseNames(MongoClient.c, bson.M{})
 	if err != nil {
+        utils.Log.Error(err.Error())
 		panic(err)
 	}
 
@@ -75,11 +72,13 @@ func NewMongoClient() *MongoDB {
 	if !dbExists {
 		err = MongoClient.mongoClient.Database(MongoClient.db).CreateCollection(MongoClient.c, MongoClient.jobCollection)
 		if err != nil {
+            utils.Log.Error(err.Error())
 			panic(err)
 		}
 	}
 	collectionNames, err := MongoClient.mongoClient.Database(MongoClient.db).ListCollectionNames(MongoClient.c, bson.M{})
 	if err != nil {
+        utils.Log.Error(err.Error())
 		panic(err)
 	}
 
@@ -94,6 +93,7 @@ func NewMongoClient() *MongoDB {
 	if !collectionExists {
 		err = MongoClient.mongoClient.Database(MongoClient.db).CreateCollection(MongoClient.c, MongoClient.jobCollection)
 		if err != nil {
+            utils.Log.Error(err.Error())
 			panic(err)
 		}
 	}
@@ -117,6 +117,7 @@ func (m *MongoDB) RetrieveJob(jobID string) (*models.AnsibleJob, error) {
 	filter := bson.M{"id": jobID}
 	err := m.mongoClient.Database(m.db).Collection(m.jobCollection).FindOne(m.c, filter).Decode(&job)
 	if err != nil {
+        utils.Log.Error(err.Error())
 		return nil, err
 	}
 	return &job, nil
@@ -124,7 +125,7 @@ func (m *MongoDB) RetrieveJob(jobID string) (*models.AnsibleJob, error) {
 
 // Close closes the MongoDB connection.
 func (m *MongoDB) Close() {
-    if m.mongoClient != nil {
+    if m != nil && m.mongoClient != nil {
 	    m.mongoClient.Disconnect(m.c)
     }
 }
