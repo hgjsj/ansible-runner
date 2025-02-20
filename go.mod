@@ -5,6 +5,7 @@ go 1.23.6
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/google/uuid v1.3.0
+	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.10.0
 	go.mongodb.org/mongo-driver v1.17.2
 	gopkg.in/yaml.v3 v3.0.1
@@ -13,6 +14,7 @@ require (
 require (
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect

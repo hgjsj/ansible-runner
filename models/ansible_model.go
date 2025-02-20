@@ -1,6 +1,7 @@
 package models
 
 import (
+	"ansible-runner/utils"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -67,6 +68,17 @@ func (h *Host) ToYaml() map[string]any {
         var varsYaml = map[string]any{"vars": h.Vars}
         hostYaml = map[string]any{h.Name: varsYaml}
     } else{
+		if osType, ok := h.Vars["os_type"]; ok && osType == "windows" {
+			h.Vars["ansible_connection"] = "winrm"
+			h.Vars["ansible_winrm_transport"] = "credssp"
+			h.Vars["ansible_port"] = "5986"
+			h.Vars["ansible_winrm_server_cert_validation"] = "ignore"
+			if tenant, ok := h.Vars["tenant"]; !ok {
+				utils.Log.Warn(fmt.Sprintf("Tenant not set for Windows host %s", h.Name))
+			} else {
+				h.Vars["ansible_password"] = fmt.Sprintf("/%s/%s/%s", viper.GetString("legacy_db"), tenant, h.Name)
+			}
+		}
         hostYaml = map[string]any{h.Name: h.Vars}
     }
     
