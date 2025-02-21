@@ -22,9 +22,8 @@ func Server() {
 	r.GET("/job/:id", controllers.GetJob)
 	port := strconv.Itoa(viper.GetInt("server.port"))
 	utils.Log.Info(fmt.Sprintf("Server start and listen on port %s", port))
-	//r.Run(":" + port) // listen and serve on configured port
 	srv = new(http.Server)
-	srv.Addr =  ":8080"
+	srv.Addr =  fmt.Sprintf(":%s", port)
 	srv.Handler = r
 
 	go func(){

@@ -94,7 +94,9 @@ func (g *Group) ToYaml() map[string]any {
     }
 
     groupYaml["hosts"] = hostsYaml
-    groupYaml["vars"] = g.Vars
+	if len(g.Vars) > 0 {
+    	groupYaml["vars"] = g.Vars
+	}
     
     return groupYaml
 }
