@@ -14,7 +14,8 @@ import (
 type MongoDB struct {
 	mongoClient   *mongo.Client
 	db            string
-	jobCollection string
+	JobCollection string
+	InventoryCollection string
 	c             context.Context
 }
 
@@ -30,7 +31,8 @@ func NewMongoClient() *MongoDB {
 	var err error
 	uri := viper.GetString("mongodb.uri")
     MongoClient.db = viper.GetString("mongodb.database")
-	MongoClient.jobCollection = viper.GetString("mongodb.jobCollection")
+	MongoClient.JobCollection = viper.GetString("mongodb.jobCollection")
+	MongoClient.InventoryCollection = viper.GetString("mongodb.inventoryCollection")
 
 	username := viper.GetString("mongodb.user")
 	password := viper.GetString("mongodb.password")
@@ -70,7 +72,7 @@ func NewMongoClient() *MongoDB {
 	}
 
 	if !dbExists {
-		err = MongoClient.mongoClient.Database(MongoClient.db).CreateCollection(MongoClient.c, MongoClient.jobCollection)
+		err = MongoClient.mongoClient.Database(MongoClient.db).CreateCollection(MongoClient.c, MongoClient.JobCollection)
 		if err != nil {
             utils.Log.Error(err.Error())
 			panic(err)
@@ -82,21 +84,33 @@ func NewMongoClient() *MongoDB {
 		panic(err)
 	}
 
-	collectionExists := false
+	jobCollectionExists := false
+	inventoryCollectionExists := false
 	for _, collName := range collectionNames {
-		if collName == MongoClient.jobCollection {
-			collectionExists = true
-			break
+		if collName == MongoClient.JobCollection {
+			jobCollectionExists = true
+		}
+		if collName == MongoClient.InventoryCollection {
+			inventoryCollectionExists = true
 		}
 	}
 
-	if !collectionExists {
-		err = MongoClient.mongoClient.Database(MongoClient.db).CreateCollection(MongoClient.c, MongoClient.jobCollection)
+	if !jobCollectionExists {
+		err = MongoClient.mongoClient.Database(MongoClient.db).CreateCollection(MongoClient.c, MongoClient.JobCollection)
 		if err != nil {
             utils.Log.Error(err.Error())
 			panic(err)
 		}
 	}
+
+	if !inventoryCollectionExists {
+		err = MongoClient.mongoClient.Database(MongoClient.db).CreateCollection(MongoClient.c, MongoClient.InventoryCollection)
+		if err != nil {
+            utils.Log.Error(err.Error())
+			panic(err)
+		}
+	}
+
     return MongoClient
 }
 
@@ -107,7 +121,17 @@ func (m *MongoDB) PersistJob(job *models.AnsibleJob) error {
     }
 	updateOptions := options.Update().SetUpsert(true)
 	filter := bson.M{"id": job.ID}
-	_, err := m.mongoClient.Database(m.db).Collection(m.jobCollection).UpdateOne(m.c, filter, update, updateOptions)
+	_, err := m.mongoClient.Database(m.db).Collection(m.JobCollection).UpdateOne(m.c, filter, update, updateOptions)
+	return err
+}
+
+func (m *MongoDB) Persist(collection string, keyFilter string, value any) error{
+    update := bson.M{
+        "$set": value,
+    }
+	updateOptions := options.Update().SetUpsert(true)
+	filter := bson.M{"id": keyFilter}
+	_, err := m.mongoClient.Database(m.db).Collection(m.JobCollection).UpdateOne(m.c, filter, update, updateOptions)
 	return err
 }
 
@@ -115,12 +139,23 @@ func (m *MongoDB) PersistJob(job *models.AnsibleJob) error {
 func (m *MongoDB) RetrieveJob(jobID string) (*models.AnsibleJob, error) {
 	var job models.AnsibleJob
 	filter := bson.M{"id": jobID}
-	err := m.mongoClient.Database(m.db).Collection(m.jobCollection).FindOne(m.c, filter).Decode(&job)
+	err := m.mongoClient.Database(m.db).Collection(m.JobCollection).FindOne(m.c, filter).Decode(&job)
 	if err != nil {
         utils.Log.Error(err.Error())
 		return nil, err
 	}
 	return &job, nil
+}
+
+func (m *MongoDB) Retrieve(collection string, keyFilter string) (any, error) {
+	var a any
+	filter := bson.M{"id": keyFilter}
+	err := m.mongoClient.Database(m.db).Collection(collection).FindOne(m.c, filter).Decode(a)
+	if err != nil {
+        utils.Log.Error(err.Error())
+		return nil, err
+	}
+	return a, nil
 }
 
 // Close closes the MongoDB connection.

@@ -21,4 +21,5 @@ mongodb:
   password: 017c0141e4e1e7071b6a7513d0
   database: "ansiblerunner"
   jobCollection: "ansiblejob"
+  inventoryCollection: "ansibleinventory"
 legacy_db: PDC03-N1

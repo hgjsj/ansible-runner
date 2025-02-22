@@ -20,6 +20,7 @@ func Server() {
 	r.GET("/playbook", controllers.ListPlaybooks)
 	r.POST("/playbook/launch", controllers.LaunchPlaybook)
 	r.GET("/job/:id", controllers.GetJob)
+	r.GET("/job/:id/inventory", controllers.GetJobInventory)
 	port := strconv.Itoa(viper.GetInt("server.port"))
 	utils.Log.Info(fmt.Sprintf("Server start and listen on port %s", port))
 	srv = new(http.Server)

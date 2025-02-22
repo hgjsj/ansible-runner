@@ -34,7 +34,6 @@ type AnsibleJob struct {
 	Output string `json:"output"`
 	Error  string `json:"error"`
 	Step   string `json:"step"`
-	Inventory Inventory `json:"inventory"`
 }
 
 // AnsibleRunner is an interface for running Ansible playbooks.
@@ -57,9 +56,11 @@ type Group struct {
 
 // Inventory represents an Ansible inventory.
 type Inventory struct {
+	ID		string  `json:"id"`
 	Localhost Host    `json:"localhost"`
 	Groups    []Group `json:"groups"`
 }
+
 
 // ToYaml adds a host to the inventory.
 func (h *Host) ToYaml() map[string]any {  
