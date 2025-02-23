@@ -47,10 +47,60 @@ func GetPlaybooks(baseDir string) ([]string, error) {
 
 }
 
+func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {	
+	outloop:
+	for{
+		select {
+		case  job := <- c:
+			utils.Log.Info(fmt.Sprintf("Status %s is arrived", job.Status))
+			if job.Status == "scheduled" {
+				var preJob = Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
+				job.Status = "preparing"
+				job.Playbook = preJob.Name
+				job.Step = "Pre-job"
+				db.NewMongoClient().PersistJob(job)
+				o, e := preJob.Run(ansible)
+				if e != nil {
+					job.Status = "failed"
+					job.Error = e.Error()
+				} else {
+					job.Status = "prepared"
+					job.Output = o
+				}
+				db.NewMongoClient().PersistJob(job)
+				c <- job
+			} else if job.Status == "prepared" {
+				var playbook = Playbook{Name: job.Playbook, ProjectDir: viper.GetString("playbook.baseDir")}
+				job.Status = "running"
+				job.Step = "Job"
+				job.Playbook = playbook.Name
+				var signedCert = filepath.Join(viper.GetString("job.baseDir"), job.ID, "p4s_signed_cert")
+				ansible.Args = append(ansible.Args, fmt.Sprintf("--private-key=%s", signedCert))
+				db.NewMongoClient().PersistJob(job)
+				o, e := playbook.Run(ansible)
+				if e != nil {
+					utils.Log.Error(e.Error())
+					job.Status = "failed"
+					job.Error = e.Error()
+				} else {
+					job.Status = "completed"
+					job.Output = o
+				}
+				db.NewMongoClient().PersistJob(job)
+				c <- job
+			} else {
+				// Run Clean up job
+				if err := os.RemoveAll(filepath.Join(viper.GetString("job.baseDir"), job.ID)); err != nil {
+					utils.Log.Error(err.Error())
+				}
+				break outloop
+			}
+		}
+	}
+}
+
 // RunPlaybook launches the specified playbook.
 func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
-	var playbook = Playbook{Name: p, ProjectDir: viper.GetString("playbook.baseDir")}
-	var preJob = Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
 	var inventory = models.NewInventory()
 	inventory.Groups = i.Groups
 	
@@ -78,52 +128,11 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 		return nil, err
 	}
 
-	
 	ansible.Args = append(ansible.Args, fmt.Sprintf("--inventory-file=%s", inventoryFile))
 	ansible.Args = append(ansible.Args, fmt.Sprintf("--extra-vars=job_dir=%s", filepath.Join(b, job.ID)))	
 	done := make(chan *models.AnsibleJob)
+	done <- job
+	go jobHandler(done, ansible)
 
-	go func(job *models.AnsibleJob) {
-		job.Status = "preparing"
-		job.Playbook = playbook.Name
-		job.Step = "Pre-job"
-		o, e := preJob.Run(ansible)
-		if e != nil {
-			job.Status = "failed"
-			job.Error = e.Error()
-		} else {
-			job.Status = "prepared"
-			job.Output = o
-		}
-		db.NewMongoClient().PersistJob(job)
-		done <- job
-	}(job)
-
-	go func(job *models.AnsibleJob) {
-		fmt.Println("it is waiting for pre-job completed")
-		<-done
-		fmt.Printf("prejob is completed with %s", job.Status)
-		if job.Status == "prepared" {
-			job.Status = "running"
-			job.Step = "Job"
-			job.Playbook = playbook.Name
-			var signedCert = filepath.Join(b, job.ID, "p4s_signed_cert")
-			ansible.Args = append(ansible.Args, fmt.Sprintf("--private-key=%s", signedCert))
-			o, e := playbook.Run(ansible)
-			if e != nil {
-				utils.Log.Error(e.Error())
-				job.Status = "failed"
-				job.Error = e.Error()
-			} else {
-				job.Status = "completed"
-				job.Output = o
-			}
-		} else{
-			job.Status = "failed"
-			job.Step = "Pre-job failed"
-			utils.Log.Error("Run Pre-Job failed")
-		}
-		db.NewMongoClient().PersistJob(job)
-	}(job)
 	return job, nil
 }
