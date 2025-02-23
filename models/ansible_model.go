@@ -43,21 +43,21 @@ type AnsibleRunner interface {
 
 // Host represents an Ansible host.
 type Host struct {
-	Name string            `json:"name"`
+	Name string            `json:"name,omitempty"`
 	Vars map[string]string `json:"vars,omitempty"`
 }
 
 // Group represents an Ansible group.
 type Group struct {
-    Name  string          `json:"name"`
-	Hosts []Host   `json:"hosts"`
+    Name  string          `json:"name,omitempty"`
+	Hosts []Host   `json:"hosts,omitempty"`
 	Vars  map[string]string `json:"vars,omitempty"`
 }
 
 // Inventory represents an Ansible inventory.
 type Inventory struct {
-	ID		string  `json:"id"`
-	Localhost Host    `json:"localhost"`
+	ID		string  `json:"id,omitempty"`
+	Localhost *Host    `json:"localhost,omitempty"`
 	Groups    []Group `json:"groups,omitempty"`
 }
 
@@ -121,13 +121,6 @@ func (i *Inventory) ToYaml(inventoryFile string) error {
 
 	err = encoder.Encode(inventoryYaml)
 
-    // data, err := yaml.Marshal(inventoryYaml)
-
-    // if err != nil {
-	// 	return err
-	// } 
-     
-	// err = os.WriteFile(inventoryFile, data, 0644)
 	if err != nil {
 	 	return err
 	}
@@ -135,22 +128,11 @@ func (i *Inventory) ToYaml(inventoryFile string) error {
 }
 
 // NewInventory creates a new Ansible inventory.
-func NewInventory() *Inventory {
-    
-
-	// host1 := Host{Name: "ss1", Vars: map[string]string{"os_type": "linux"}}
-    // host2 := Host{Name: "ss2", Vars: map[string]string{"os_type": "linux"}}
-    // host3 := Host{Name: "ss3", Vars: map[string]string{"os_type": "linux"}}
-    // vars := map[string]string{"https_proxy": "http://proxy.example.com:8080"}
-    // var group = Group{Name: "servers", Hosts: []Host{host1, host2, host3}, Vars: vars}
-
-    // groups := []Group{group}   
-    
+func NewInventory() *Inventory { 
 	return &Inventory{
-		Localhost: Host{
+		Localhost: &Host{
 			Name: "localhost",
 			Vars: map[string]string{"ansible_connection": "local"},
 		},
-        // Groups: groups,
 	}
 }

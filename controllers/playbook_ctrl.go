@@ -54,6 +54,6 @@ func LaunchPlaybook(c *gin.Context) {
 		return
 	}
 	utils.Log.Info("Run playbook is ok and response")
-	var responseJob = JobResponse{ID: job.ID,Status: job.Status, Step: job.Step, Output: job.Output, Err: job.Error}
+	var responseJob = JobResponse{ID: job.ID,Status: job.Status}
 	c.JSON(http.StatusOK,responseJob)
 }

@@ -17,7 +17,7 @@ type JobResponse struct {
 	Step   string   `json:"step,omitempty"`
 	Output string   `json:"stdout,omitempty"`
 	Err    string   `json:"stderr,omitempty"`
-	Inventory models.Inventory `json:"inventory,omitempty"`
+	Inventory *models.Inventory `json:"inventory,omitempty"`
 }
 
 // GetJob handles the retrieval of a job.
@@ -43,7 +43,7 @@ func GetJobInventory(c *gin.Context){
 		return
 	}
 	utils.Log.Info(fmt.Sprintf("Get job inventory %s and response", id))
-    inv.Localhost = models.Host{}
-	var responseJob = JobResponse{Inventory: *inv}
+    inv.Localhost = nil
+	var responseJob = JobResponse{Inventory: inv}
 	c.JSON(http.StatusOK, responseJob)
 }
