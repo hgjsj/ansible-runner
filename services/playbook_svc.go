@@ -56,7 +56,6 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 			if job.Status == "scheduled" {
 				var preJob = Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
 				job.Status = "preparing"
-				job.Playbook = preJob.Name
 				job.Step = "Pre-job"
 				db.NewMongoClient().PersistJob(job)
 				o, e := preJob.Run(ansible)
@@ -108,6 +107,7 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 	job := new(models.AnsibleJob)
 	job.ID = uuid.New().String()
 	job.Status = "scheduled"
+	job.Playbook = p
 	inventory.ID = job.ID
 
 	err := db.NewMongoClient().Persist(db.NewMongoClient().InventoryCollection, inventory.ID, inventory)
@@ -122,7 +122,7 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 		return nil, err
 	}
 
-	var inventoryFile = filepath.Join(b, job.ID, "hosts.yml")
+	 var inventoryFile = filepath.Join(b, job.ID, "hosts.yml")
 	if err := inventory.ToYaml(inventoryFile); err != nil {
 		utils.Log.Error(err.Error())
 		return nil, err
@@ -130,7 +130,7 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 
 	ansible.Args = append(ansible.Args, fmt.Sprintf("--inventory-file=%s", inventoryFile))
 	ansible.Args = append(ansible.Args, fmt.Sprintf("--extra-vars=job_dir=%s", filepath.Join(b, job.ID)))	
-	done := make(chan *models.AnsibleJob)
+	done := make(chan *models.AnsibleJob, 1)
 	done <- job
 	go jobHandler(done, ansible)
 
