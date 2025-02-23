@@ -43,6 +43,7 @@ func GetJobInventory(c *gin.Context){
 		return
 	}
 	utils.Log.Info(fmt.Sprintf("Get job inventory %s and response", id))
+    inv.Localhost = models.Host{}
 	var responseJob = JobResponse{Inventory: *inv}
 	c.JSON(http.StatusOK, responseJob)
 }

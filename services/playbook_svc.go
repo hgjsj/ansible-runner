@@ -60,7 +60,12 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 	job.Status = "scheduled"
 	inventory.ID = job.ID
 
-	db.NewMongoClient().Persist(db.NewMongoClient().InventoryCollection, inventory.ID, inventory)
+	err := db.NewMongoClient().Persist(db.NewMongoClient().InventoryCollection, inventory.ID, inventory)
+	if err != nil {
+		utils.Log.Error(err.Error())
+		return nil, err
+	}
+
 	var b = viper.GetString("job.baseDir")	
 	if err := os.MkdirAll(filepath.Join(b, job.ID), os.ModePerm); err != nil {
 		utils.Log.Error(err.Error())
@@ -117,29 +122,6 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 			job.Status = "failed"
 			job.Step = "Pre-job failed"
 			utils.Log.Error("Run Pre-Job failed")
-		}
-		db.NewMongoClient().PersistJob(job)
-	}(job)
-	go func(job *models.AnsibleJob) {
-		fmt.Println("it is waiting for job completed")
-		<-done
-		fmt.Printf("job is completed with %s", job.Status)
-		if job.Status == "completed" {
-			job.Status = "post-job"
-			job.Step = "Post-job"
-			o, e := playbook.Run(ansible)
-			if e != nil {
-				utils.Log.Error(e.Error())
-				job.Status = "failed"
-				job.Error = e.Error()
-			} else {
-				job.Status = "completed"
-				job.Output = o
-			}
-		} else{
-			job.Status = "failed"
-			job.Step = "Job failed"
-			utils.Log.Error("Run Job failed")
 		}
 		db.NewMongoClient().PersistJob(job)
 	}(job)

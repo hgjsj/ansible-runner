@@ -31,8 +31,8 @@ type AnsibleJob struct {
 	ID     string `json:"id"`
 	Playbook string `json:"playbook"`
 	Status string `json:"status"`
-	Output string `json:"output"`
-	Error  string `json:"error"`
+	Output string `json:"output,omitempty"`
+	Error  string `json:"error,omitempty"`
 	Step   string `json:"step"`
 }
 
@@ -44,21 +44,21 @@ type AnsibleRunner interface {
 // Host represents an Ansible host.
 type Host struct {
 	Name string            `json:"name"`
-	Vars map[string]string `json:"vars"`
+	Vars map[string]string `json:"vars,omitempty"`
 }
 
 // Group represents an Ansible group.
 type Group struct {
     Name  string          `json:"name"`
 	Hosts []Host   `json:"hosts"`
-	Vars  map[string]string `json:"vars"`
+	Vars  map[string]string `json:"vars,omitempty"`
 }
 
 // Inventory represents an Ansible inventory.
 type Inventory struct {
 	ID		string  `json:"id"`
 	Localhost Host    `json:"localhost"`
-	Groups    []Group `json:"groups"`
+	Groups    []Group `json:"groups,omitempty"`
 }
 
 

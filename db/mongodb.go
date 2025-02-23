@@ -131,7 +131,7 @@ func (m *MongoDB) Persist(collection string, keyFilter string, value any) error{
     }
 	updateOptions := options.Update().SetUpsert(true)
 	filter := bson.M{"id": keyFilter}
-	_, err := m.mongoClient.Database(m.db).Collection(m.JobCollection).UpdateOne(m.c, filter, update, updateOptions)
+	_, err := m.mongoClient.Database(m.db).Collection(collection).UpdateOne(m.c, filter, update, updateOptions)
 	return err
 }
 
@@ -147,15 +147,14 @@ func (m *MongoDB) RetrieveJob(jobID string) (*models.AnsibleJob, error) {
 	return &job, nil
 }
 
-func (m *MongoDB) Retrieve(collection string, keyFilter string) (any, error) {
-	var a any
+func (m *MongoDB) Retrieve(collection string, keyFilter string, v any) (error) {
 	filter := bson.M{"id": keyFilter}
-	err := m.mongoClient.Database(m.db).Collection(collection).FindOne(m.c, filter).Decode(a)
+	err := m.mongoClient.Database(m.db).Collection(collection).FindOne(m.c, filter).Decode(v)
 	if err != nil {
         utils.Log.Error(err.Error())
-		return nil, err
+		return err
 	}
-	return a, nil
+	return nil
 }
 
 // Close closes the MongoDB connection.

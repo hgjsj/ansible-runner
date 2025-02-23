@@ -16,9 +16,10 @@ func GetJob(id string) (*models.AnsibleJob, error) {
 }
 
 func GetJobInventory(id string) (*models.Inventory, error) {
-	if i, err := db.NewMongoClient().Retrieve(db.NewMongoClient().InventoryCollection, id); err != nil{
+	i := &models.Inventory{}
+	if err := db.NewMongoClient().Retrieve(db.NewMongoClient().InventoryCollection, id, i); err != nil{
 		return nil, fmt.Errorf("inventory %s not found", id)
 	} else {
-		return i.(*models.Inventory), nil
+		return i, nil
 	}
 }
