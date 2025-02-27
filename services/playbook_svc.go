@@ -86,16 +86,18 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 					job.Status = "completed"
 					job.Output = o
 				}
-                job.EndTime = time.Now()
-				db.NewMongoClient().PersistJob(job)
+                db.NewMongoClient().PersistJob(job)
 				c <- job
 			} else {
+                job.EndTime = time.Now()
+                db.NewMongoClient().PersistJob(job)
 				// Run Clean up job
 				if err := os.RemoveAll(filepath.Join(viper.GetString("job.baseDir"), job.ID)); err != nil {
 					utils.Log.Error(err.Error())
 				}
 				break outloop
 			}
+            
 		}
 	}
 }

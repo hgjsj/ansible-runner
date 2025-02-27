@@ -2,11 +2,11 @@ package controllers
 
 import (
 	"ansible-runner/models"
+	"ansible-runner/services"
 	"ansible-runner/utils"
-    "ansible-runner/services"
 	"fmt"
 	"net/http"
-
+	"time"
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,7 +33,10 @@ func GetJob(c *gin.Context) {
 	}
 	utils.Log.Info(fmt.Sprintf("Get job %s and response", job.ID))
 	var responseJob = JobResponse{ID: job.ID, Status: job.Status, Step: job.Step, Output: job.Output, Err: job.Error,
-		StartAt: job.StartTime.Format("RFC3339"), EndAt: job.EndTime.Format("RFC3339")}
+		StartAt: job.StartTime.Format(time.RFC3339)}
+	if job.EndTime.IsZero() == false {
+		responseJob.EndAt = job.EndTime.Format(time.RFC3339)
+	}
 	c.JSON(http.StatusOK, responseJob)
 }
 
