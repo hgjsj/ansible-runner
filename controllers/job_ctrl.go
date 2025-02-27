@@ -18,6 +18,8 @@ type JobResponse struct {
 	Output string   `json:"stdout,omitempty"`
 	Err    string   `json:"stderr,omitempty"`
 	Inventory *models.Inventory `json:"inventory,omitempty"`
+	StartAt string `json:"start_at,omitempty"`
+	EndAt string `json:"end_at,omitempty"`
 }
 
 // GetJob handles the retrieval of a job.
@@ -30,7 +32,8 @@ func GetJob(c *gin.Context) {
 		return
 	}
 	utils.Log.Info(fmt.Sprintf("Get job %s and response", job.ID))
-	var responseJob = JobResponse{ID: job.ID, Status: job.Status, Step: job.Step, Output: job.Output, Err: job.Error}
+	var responseJob = JobResponse{ID: job.ID, Status: job.Status, Step: job.Step, Output: job.Output, Err: job.Error,
+		StartAt: job.StartTime.Format("RFC3339"), EndAt: job.EndTime.Format("RFC3339")}
 	c.JSON(http.StatusOK, responseJob)
 }
 

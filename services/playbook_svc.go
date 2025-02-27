@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
@@ -85,6 +86,7 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 					job.Status = "completed"
 					job.Output = o
 				}
+                job.EndTime = time.Now()
 				db.NewMongoClient().PersistJob(job)
 				c <- job
 			} else {
@@ -108,6 +110,8 @@ func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
 	job.ID = uuid.New().String()
 	job.Status = "scheduled"
 	job.Playbook = p
+    job.StartTime = time.Now()
+
 	inventory.ID = job.ID
 
 	err := db.NewMongoClient().Persist(db.NewMongoClient().InventoryCollection, inventory.ID, inventory)

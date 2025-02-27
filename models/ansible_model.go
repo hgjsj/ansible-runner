@@ -4,8 +4,8 @@ import (
 	"ansible-runner/utils"
 	"fmt"
 	"os"
+	"time"
 	"path/filepath"
-
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
@@ -28,12 +28,14 @@ func NewAnsible(exe string) *Ansible {
 
 // AnsibleJob represents a job that runs a playbook.
 type AnsibleJob struct {
-	ID     string `json:"id"`
-	Playbook string `json:"playbook"`
-	Status string `json:"status"`
+	ID     string `json:"id,omitempty"`
+	Playbook string `json:"playbook,omitempty"`
+	Status string `json:"status,omitempty"`
 	Output string `json:"output,omitempty"`
 	Error  string `json:"error,omitempty"`
-	Step   string `json:"step"`
+	Step   string `json:"step,omitempty"`
+	StartTime time.Time `json:"start_time,omitempty"`
+	EndTime time.Time `json:"end_time,omitempty"`
 }
 
 // AnsibleRunner is an interface for running Ansible playbooks.
