@@ -38,6 +38,7 @@ func GetJob(c *gin.Context) {
 		responseJob.EndAt = job.EndTime.Format(time.RFC3339)
 	}
 	c.JSON(http.StatusOK, responseJob)
+	gin.Logger()
 }
 
 func GetJobInventory(c *gin.Context){

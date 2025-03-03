@@ -54,24 +54,24 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 		select {
 		case  job := <- c:
 			utils.Log.Info(fmt.Sprintf("Status %s is arrived", job.Status))
-			if job.Status == "scheduled" {
+			if job.Status == models.Scheduled {
 				var preJob = Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
-				job.Status = "preparing"
+				job.Status = models.Preparing
 				job.Step = "Pre-job"
 				db.NewMongoClient().PersistJob(job)
 				o, e := preJob.Run(ansible)
 				if e != nil {
-					job.Status = "failed"
+					job.Status = models.Failed
 					job.Error = e.Error()
 				} else {
-					job.Status = "prepared"
+					job.Status = models.Prepared
 					job.Output = o
 				}
 				db.NewMongoClient().PersistJob(job)
 				c <- job
-			} else if job.Status == "prepared" {
+			} else if job.Status == models.Prepared {
 				var playbook = Playbook{Name: job.Playbook, ProjectDir: viper.GetString("playbook.baseDir")}
-				job.Status = "running"
+				job.Status = models.Running
 				job.Step = "Job"
 				job.Playbook = playbook.Name
 				var signedCert = filepath.Join(viper.GetString("job.baseDir"), job.ID, "p4s_signed_cert")
@@ -80,10 +80,10 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 				o, e := playbook.Run(ansible)
 				if e != nil {
 					utils.Log.Error(e.Error())
-					job.Status = "failed"
+					job.Status = models.Failed
 					job.Error = e.Error()
 				} else {
-					job.Status = "completed"
+					job.Status = models.Completed
 					job.Output = o
 				}
                 db.NewMongoClient().PersistJob(job)

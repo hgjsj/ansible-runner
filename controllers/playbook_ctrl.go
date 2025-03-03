@@ -2,12 +2,13 @@ package controllers
 
 import (
 	"ansible-runner/models"
-	"ansible-runner/services"
+	"ansible-runner/tasks"
 	"ansible-runner/utils"
+	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 )
 
 // LaunchRequest represents a request to launch a playbook.
@@ -16,20 +17,13 @@ type LaunchRequest struct {
 	Inventory models.Inventory `json:"inventory"`
 }
 
+var playbookList []string = []string{"p4s_account_validate.yml"}
+
 // ListPlaybooks handles the listing of playbooks.
 func ListPlaybooks(c *gin.Context) {
-	baseDir := viper.GetString("playbook.baseDir")
-	playbooks, err := services.GetPlaybooks(baseDir)
-	if err != nil {
-		utils.Log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
 	utils.Log.Info("List playbook is ok and response")
 	c.JSON(http.StatusOK, gin.H{
-		"playbooks": playbooks,
+		"playbooks": playbookList,
 	})
 }
 
@@ -44,8 +38,17 @@ func LaunchPlaybook(c *gin.Context) {
 		return
 	}
 
+	// Check if the playbook is in the list of available playbooks.
+	if slices.Contains(playbookList, requestBody.Playbook) == false {
+		utils.Log.Error(fmt.Sprintf("Playbook %s is not in the list of available playbooks", requestBody.Playbook))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("Playbook %s is not in the list of available playbooks", requestBody.Playbook),
+		})
+		return
+	}
+
 	utils.Log.Info("Get payload from request is ok")
-	job, err := services.RunPlaybook(requestBody.Playbook, requestBody.Inventory)
+	jobID, err := tasks.NewAsynqClient().EnqueueJobTask(requestBody.Playbook, &requestBody.Inventory)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -54,6 +57,6 @@ func LaunchPlaybook(c *gin.Context) {
 		return
 	}
 	utils.Log.Info("Run playbook is ok and response")
-	var responseJob = JobResponse{ID: job.ID,Status: job.Status}
-	c.JSON(http.StatusOK,responseJob)
+	var responseJob = JobResponse{ID: jobID, Status: models.Scheduled}
+	c.JSON(http.StatusOK, responseJob)
 }

@@ -37,7 +37,15 @@ type AnsibleJob struct {
 	StartTime time.Time `json:"start_time,omitempty"`
 	EndTime time.Time `json:"end_time,omitempty"`
 }
-
+// enum for job status
+const (
+	Scheduled = "scheduled"
+	Preparing = "preparing"
+	Prepared = "prepared"
+	Running = "running"
+	Completed = "completed"
+	Failed = "failed"
+)
 // AnsibleRunner is an interface for running Ansible playbooks.
 type AnsibleRunner interface {
 	Run(*Ansible) (string, error)

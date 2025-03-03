@@ -14,9 +14,12 @@ import (
 )
 
 var srv *http.Server
+
+
 // Server initializes the Gin router and sets up the routes.
 func Server() {
 	r := gin.Default()
+	r.Use(gin.Logger())
 	r.GET("/playbook", controllers.ListPlaybooks)
 	r.POST("/playbook/launch", controllers.LaunchPlaybook)
 	r.GET("/job/:id", controllers.GetJob)
@@ -28,7 +31,7 @@ func Server() {
 	srv.Handler = r
 
 	go func(){
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := srv.ListenAndServeTLS("./cert/server.crt", "./cert/server.key"); err != nil && err != http.ErrServerClosed {
 			fmt.Printf("listen: %s\n", err)
 		}
 	}()

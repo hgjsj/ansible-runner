@@ -10,12 +10,12 @@ var Log *zap.Logger
 var lumberjackLogger *lumberjack.Logger
 
 // InitLogger initialize a log instance
-func InitLogger() {
+func InitLogger(name string) {
 
 	// Configure lumberjack for log rotation
 	lumberjackLogger = new(lumberjack.Logger)
 
-	lumberjackLogger.Filename = "logs/ansiblerunner.log"
+	lumberjackLogger.Filename = "logs/" + name
 	lumberjackLogger.MaxSize = 10   // megabytes
 	lumberjackLogger.MaxBackups = 3 // number of old log files to retain
 

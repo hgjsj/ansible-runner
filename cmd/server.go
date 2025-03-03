@@ -27,7 +27,7 @@ var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Launch an HTTP server to accept requests to schedule  Ansible jobs",
 	Run: func(cmd *cobra.Command, args []string) {
-		utils.InitLogger()
+		utils.InitLogger("server.log")
 		configs.LoadConfig("./")
 		routers.Server()
 	},
