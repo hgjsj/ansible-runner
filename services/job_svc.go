@@ -23,3 +23,7 @@ func GetJobInventory(id string) (*models.Inventory, error) {
 		return i, nil
 	}
 }
+
+func SaveJob(job *models.AnsibleJob) error {
+	return db.NewMongoClient().PersistJob(job)
+}

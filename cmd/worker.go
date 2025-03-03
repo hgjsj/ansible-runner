@@ -8,7 +8,7 @@ import (
 )
 
 var workerCmd = &cobra.Command{
-	Use:   "server",
+	Use:   "worker",
 	Short: "Launch a worker instance to hanle an Ansible jobs",
 	Run: func(cmd *cobra.Command, args []string) {
 		utils.InitLogger("worker.log")

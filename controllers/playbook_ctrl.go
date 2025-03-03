@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"ansible-runner/models"
+	"ansible-runner/services"
 	"ansible-runner/tasks"
 	"ansible-runner/utils"
 	"fmt"
@@ -56,7 +57,15 @@ func LaunchPlaybook(c *gin.Context) {
 		})
 		return
 	}
+	aj := models.AnsibleJob{ID: jobID, Playbook: requestBody.Playbook, Status: models.Scheduled}
+	if err := services.SaveJob(&aj); err != nil {
+		utils.Log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 	utils.Log.Info("Run playbook is ok and response")
-	var responseJob = JobResponse{ID: jobID, Status: models.Scheduled}
+	var responseJob = JobResponse{ID: aj.ID, Status: aj.Status}
 	c.JSON(http.StatusOK, responseJob)
 }
