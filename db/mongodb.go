@@ -114,17 +114,6 @@ func NewMongoClient() *MongoDB {
     return MongoClient
 }
 
-// PersistJob saves the AnsibleJob to the database.
-func (m *MongoDB) PersistJob(job *models.AnsibleJob) error {
-    update := bson.M{
-        "$set": job,
-    }
-	updateOptions := options.Update().SetUpsert(true)
-	filter := bson.M{"id": job.ID}
-	_, err := m.mongoClient.Database(m.db).Collection(m.JobCollection).UpdateOne(m.c, filter, update, updateOptions)
-	return err
-}
-
 func (m *MongoDB) Persist(collection string, keyFilter string, value any) error{
     update := bson.M{
         "$set": value,

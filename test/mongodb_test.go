@@ -19,7 +19,7 @@ func TestPersistJob(t *testing.T) {
 	job.Status = "scheduled"
 	job.Step = "pre job before"
 	job.Playbook = "pre_job_run.yml"
-	if err := cli.PersistJob(job); err != nil {
+	if err := cli.Persist(cli.JobCollection,"unit-test", job); err != nil {
 		t.Fatalf("insert doc to mongodb failed with err %s", err.Error())
 	} else {
 		t.Log("insert doc to mongodb successful")
@@ -29,7 +29,7 @@ func TestPersistJob(t *testing.T) {
 func TestRetrieveJob(t *testing.T) {
 	cli := db.NewMongoClient()
 	job := new(models.AnsibleJob)
-	if err := cli.Retrieve(db.NewMongoClient().JobCollection, "unit-test", job); err != nil {
+	if err := cli.Retrieve(cli.JobCollection, "unit-test", job); err != nil {
 		t.Fatalf("get doc to mongodb failed with err %s", err.Error())
 	} else {
 		if job.ID == "unit-test" && job.Status == "scheduled" && job.Step == "pre job before" && job.Playbook == "pre_job_run.yml" {

@@ -56,7 +56,7 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 				var preJob = Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
 				job.Status = models.Preparing
 				job.Step = "Pre-job"
-				db.NewMongoClient().PersistJob(job)
+				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID, job)
 				o, e := preJob.Run(ansible)
 				if e != nil {
 					job.Status = models.Failed
@@ -65,7 +65,8 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 					job.Status = models.Prepared
 					job.Output = o
 				}
-				db.NewMongoClient().PersistJob(job)
+				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID, job)
+				
 				c <- job
 			} else if job.Status == models.Prepared {
 				var playbook = Playbook{Name: job.Playbook, ProjectDir: viper.GetString("playbook.baseDir")}
@@ -74,7 +75,7 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 				job.Playbook = playbook.Name
 				var signedCert = filepath.Join(viper.GetString("job.baseDir"), job.ID, "p4s_signed_cert")
 				ansible.Args = append(ansible.Args, fmt.Sprintf("--private-key=%s", signedCert))
-				db.NewMongoClient().PersistJob(job)
+				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID, job)
 				o, e := playbook.Run(ansible)
 				if e != nil {
 					utils.Log.Error(e.Error())
@@ -84,11 +85,12 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 					job.Status = models.Completed
 					job.Output = o
 				}
-                db.NewMongoClient().PersistJob(job)
+				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID, job)
+				
 				c <- job
 			} else {
                 job.EndTime = time.Now()
-                db.NewMongoClient().PersistJob(job)
+                db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID, job)
 				// Run Clean up job
 				if err := os.RemoveAll(filepath.Join(viper.GetString("job.baseDir"), job.ID)); err != nil {
 					utils.Log.Error(err.Error())
