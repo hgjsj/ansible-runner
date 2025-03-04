@@ -67,6 +67,7 @@ type Group struct {
 // Inventory represents an Ansible inventory.
 type Inventory struct {
 	ID		string  `json:"id,omitempty"`
+	Name    string  `json:"name,omitempty"`
 	Localhost *Host    `json:"localhost,omitempty"`
 	Groups    []Group `json:"groups,omitempty"`
 }

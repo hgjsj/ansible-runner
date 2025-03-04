@@ -40,17 +40,3 @@ func GetJob(c *gin.Context) {
 	c.JSON(http.StatusOK, responseJob)
 	gin.Logger()
 }
-
-func GetJobInventory(c *gin.Context){
-	id := c.Param("id")
-	inv, err := services.GetJobInventory(id)
-	if err != nil {
-		utils.Log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	utils.Log.Info(fmt.Sprintf("Get job inventory %s and response", id))
-    inv.Localhost = nil
-	var responseJob = JobResponse{Inventory: inv}
-	c.JSON(http.StatusOK, responseJob)
-}

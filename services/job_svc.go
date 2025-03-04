@@ -8,10 +8,11 @@ import (
 
 // GetJob retrieves a job by its ID.
 func GetJob(id string) (*models.AnsibleJob, error) {
-	if job, err := db.NewMongoClient().RetrieveJob(id); err != nil{
+    j := &models.AnsibleJob{}
+	if err := db.NewMongoClient().Retrieve(db.MongoClient.JobCollection, id, j); err != nil{
 		return nil, fmt.Errorf("job %s not found", id)
 	} else {
-		return job, nil
+		return j, nil
 	}
 }
 

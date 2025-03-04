@@ -102,9 +102,6 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 
 // RunPlaybook launches the specified playbook.
 func RunPlaybook(p string, j string, i models.Inventory) (*models.AnsibleJob, error) {
-	var inventory = models.NewInventory()
-	inventory.Groups = i.Groups
-	
 	var ansible = models.NewAnsible("playbook")
 	job := new(models.AnsibleJob)
 	job.ID = j
@@ -112,14 +109,23 @@ func RunPlaybook(p string, j string, i models.Inventory) (*models.AnsibleJob, er
 	job.Playbook = p
     job.StartTime = time.Now()
 
-	inventory.ID = job.ID
-
-	err := db.NewMongoClient().Persist(db.NewMongoClient().InventoryCollection, inventory.ID, inventory)
-	if err != nil {
-		utils.Log.Error(err.Error())
-		return nil, err
+	var inventory = models.NewInventory()
+	if i.ID == "" {
+		inventory.ID = job.ID
+		inventory.Groups = i.Groups
+		err := db.NewMongoClient().Persist(db.NewMongoClient().InventoryCollection, inventory.ID, inventory)
+		if err != nil {
+			utils.Log.Error(err.Error())
+			return nil, err
+		}
+	} else {
+		err := db.NewMongoClient().Retrieve(db.NewMongoClient().InventoryCollection, i.ID, inventory)
+		if err != nil {
+			utils.Log.Error(err.Error())
+			return nil, err
+		}
 	}
-
+	
 	var b = viper.GetString("job.baseDir")	
 	if err := os.MkdirAll(filepath.Join(b, job.ID), os.ModePerm); err != nil {
 		utils.Log.Error(err.Error())

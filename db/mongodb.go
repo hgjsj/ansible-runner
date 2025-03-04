@@ -135,18 +135,6 @@ func (m *MongoDB) Persist(collection string, keyFilter string, value any) error{
 	return err
 }
 
-// RetrieveJob retrieves an AnsibleJob from the database by its ID.
-func (m *MongoDB) RetrieveJob(jobID string) (*models.AnsibleJob, error) {
-	var job models.AnsibleJob
-	filter := bson.M{"id": jobID}
-	err := m.mongoClient.Database(m.db).Collection(m.JobCollection).FindOne(m.c, filter).Decode(&job)
-	if err != nil {
-        utils.Log.Error(err.Error())
-		return nil, err
-	}
-	return &job, nil
-}
-
 func (m *MongoDB) Retrieve(collection string, keyFilter string, v any) (error) {
 	filter := bson.M{"id": keyFilter}
 	err := m.mongoClient.Database(m.db).Collection(collection).FindOne(m.c, filter).Decode(v)
@@ -155,6 +143,35 @@ func (m *MongoDB) Retrieve(collection string, keyFilter string, v any) (error) {
 		return err
 	}
 	return nil
+}
+
+
+func (m *MongoDB) ListAllDocuments(collection string) ([] models.Inventory, error) {
+    var results =  make([]models.Inventory, 10)
+	projection := bson.D{{"id", 1}, {"name", 1}}
+
+    cursor, err := m.mongoClient.Database(m.db).Collection(collection).Find(m.c, bson.M{}, options.Find().SetProjection(projection))
+    if err != nil {
+        utils.Log.Error("Failed to list documents", "error", err)
+        return nil, err
+    }
+    defer cursor.Close(m.c)
+
+    for cursor.Next(m.c) {
+        var result models.Inventory
+        if err := cursor.Decode(&result); err != nil {
+            utils.Log.Error("Failed to decode document", "error", err)
+            return nil, err
+        }
+        results = append(results, result)
+    }
+
+    if err := cursor.Err(); err != nil {
+        utils.Log.Error("Cursor error", "error", err)
+        return nil, err
+    }
+
+    return results, nil
 }
 
 // Close closes the MongoDB connection.
