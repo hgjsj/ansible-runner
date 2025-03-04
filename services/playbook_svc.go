@@ -8,8 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/google/uuid"
 	"github.com/spf13/viper"
 )
 
@@ -103,13 +101,13 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 }
 
 // RunPlaybook launches the specified playbook.
-func RunPlaybook(p string, i models.Inventory) (*models.AnsibleJob, error) {
+func RunPlaybook(p string, j string, i models.Inventory) (*models.AnsibleJob, error) {
 	var inventory = models.NewInventory()
 	inventory.Groups = i.Groups
 	
 	var ansible = models.NewAnsible("playbook")
 	job := new(models.AnsibleJob)
-	job.ID = uuid.New().String()
+	job.ID = j
 	job.Status = "scheduled"
 	job.Playbook = p
     job.StartTime = time.Now()
