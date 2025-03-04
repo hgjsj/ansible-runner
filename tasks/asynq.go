@@ -36,6 +36,7 @@ func NewAsynqClient() *AsynqClient {
 	}
 
 	asynqClient = &AsynqClient{asynq.NewClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password})}
+	// set logger to client
 	return asynqClient
 }
 
@@ -50,7 +51,7 @@ func NewAsyncServer() *AsynqServer {
 		panic(err)
 	}
 
-	asynqServer = &AsynqServer{s: asynq.NewServer(asynq.RedisClientOpt{Addr: redisAddr, Password: password}, asynq.Config{}), m: asynq.NewServeMux()}
+	asynqServer = &AsynqServer{s: asynq.NewServer(asynq.RedisClientOpt{Addr: redisAddr, Password: password}, asynq.Config{Concurrency: 5}), m: asynq.NewServeMux()}
 	return asynqServer
 }
 

@@ -2,12 +2,11 @@ package utils
 
 import (
 	"os"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"log/slog"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-var Log *zap.Logger
+var Log *slog.Logger
 var lumberjackLogger *lumberjack.Logger
 
 // InitLogger initialize a log instance
@@ -20,22 +19,10 @@ func InitLogger(name string) {
 	lumberjackLogger.MaxSize = 10   // megabytes
 	lumberjackLogger.MaxBackups = 3 // number of old log files to retain
 
-	// Configure the file write syncer
-	writeSyncer := zapcore.AddSync(lumberjackLogger)
-
-	// Configure the encoder
-	encoderConfig := zap.NewProductionEncoderConfig()
-	encoderConfig.TimeKey = "timestamp"
-	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	encoder := zapcore.NewJSONEncoder(encoderConfig)
-	encoder.AddInt("pid", os.Getpid())
-	// Configure the core
-	core := zapcore.NewCore(encoder, writeSyncer, zapcore.InfoLevel)
-
-	// Create the logger
-	Log = zap.New(core, zap.AddCaller())
-
-	defer Log.Sync() // flushes buffer, if any
+    // Create a new slog logger with lumberjack as the output
+    handler := slog.NewJSONHandler(lumberjackLogger, nil)
+    Log = slog.New(handler)
+	Log = Log.With("pid", os.Getpid())
 }
 
 func CleanUp() {
