@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"os"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -27,12 +28,12 @@ func InitLogger(name string) {
 	encoderConfig.TimeKey = "timestamp"
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	encoder := zapcore.NewJSONEncoder(encoderConfig)
-
+	encoder.AddInt("pid", os.Getpid())
 	// Configure the core
 	core := zapcore.NewCore(encoder, writeSyncer, zapcore.InfoLevel)
 
 	// Create the logger
-	Log = zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+	Log = zap.New(core, zap.AddCaller())
 
 	defer Log.Sync() // flushes buffer, if any
 }
