@@ -136,7 +136,7 @@ func (m *MongoDB) Retrieve(collection string, keyFilter string, v any) (error) {
 
 
 func (m *MongoDB) ListAllDocuments(collection string) ([] models.Inventory, error) {
-    var results =  make([]models.Inventory, 10)
+    var results = make([]models.Inventory, 0)
 	projection := bson.D{{"id", 1}, {"name", 1}}
 
     cursor, err := m.mongoClient.Database(m.db).Collection(collection).Find(m.c, bson.M{}, options.Find().SetProjection(projection))

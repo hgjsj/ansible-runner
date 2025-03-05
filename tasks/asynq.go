@@ -83,7 +83,7 @@ func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 		utils.Log.Error(err.Error())
 		return err
 	}
-	job, err := services.RunPlaybook(p.Playbook, p.ID, p.Inventory)
+	job, err := services.RunPlaybook(p.Playbook, p.ID, &p.Inventory)
 	if err != nil {
 		utils.Log.Error(err.Error())
 	}

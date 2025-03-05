@@ -23,7 +23,6 @@ func Server() {
 	r.GET("/playbook", controllers.ListPlaybooks)
 	r.POST("/playbook/launch", controllers.LaunchPlaybook)
 	r.GET("/job/:id", controllers.GetJob)
-	r.GET("/job/:id/inventory", controllers.GetInventory)
 	r.GET("/inventory", controllers.ListInventory)
 	r.GET("/inventory/:id", controllers.GetInventory)
 	r.POST("/inventory", controllers.CreateInventory)
