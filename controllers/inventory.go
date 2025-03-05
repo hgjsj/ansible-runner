@@ -31,9 +31,7 @@ func GetInventory(c *gin.Context) {
 		return
 	}
 	utils.Log.Info(fmt.Sprintf("Get inventory %s and response", id))
-	inv.Localhost = nil
-	var responseJob = JobResponse{Inventory: inv}
-	c.JSON(http.StatusOK, responseJob)
+	c.JSON(http.StatusOK, inv)
 }
 
 func CreateInventory(c *gin.Context) {
@@ -53,7 +51,5 @@ func CreateInventory(c *gin.Context) {
 		return
 	}
 	utils.Log.Info("Create inventory is ok and response")
-	c.JSON(http.StatusOK, gin.H{
-		"playbooks": playbookList,
-	})
+	c.JSON(http.StatusOK, requestBody)
 }
