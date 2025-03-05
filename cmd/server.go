@@ -4,6 +4,7 @@ import (
 	"ansible-runner/configs"
 	"ansible-runner/db"
 	"ansible-runner/routers"
+	"ansible-runner/tasks"
 	"ansible-runner/utils"
 	"os"
 	"os/signal"
@@ -20,6 +21,7 @@ func cleanup(cmd *cobra.Command, args []string) {
 	utils.Log.Info("Cleanup and shutting down server...")
 	routers.ShutDown()
 	db.MongoClient.Close()
+	tasks.NewAsynqClient().Close()
 	utils.CleanUp()
 }
 

@@ -100,3 +100,16 @@ func (s *AsynqServer) LaunchServer() {
 		utils.Log.Error(err.Error())
 	}
 }
+
+// Close closes the MongoDB connection.
+func (s *AsynqServer) Close() {
+    if s != nil && s.s != nil {
+	    s.s.Shutdown()
+    }
+}
+
+func (c *AsynqClient) Close(){
+	if c != nil {
+	    c.Close()
+    }
+}
