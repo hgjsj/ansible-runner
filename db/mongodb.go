@@ -121,6 +121,10 @@ func (m *MongoDB) Persist(collection string, keyFilter string, value any) (strin
 	updateOptions := options.Update().SetUpsert(true)
 	filter := bson.M{"_id": keyFilter}
 	res, err := m.mongoClient.Database(m.db).Collection(collection).UpdateOne(m.c, filter, update, updateOptions)
+	if err != nil {
+		utils.Log.Error(err.Error())
+		return "", err
+	}
 	return res.UpsertedID.(primitive.ObjectID).Hex(), err
 }
 
@@ -129,7 +133,7 @@ func (m *MongoDB) Retrieve(collection string, keyFilter string, v any) (error) {
 	err := m.mongoClient.Database(m.db).Collection(collection).FindOne(m.c, filter).Decode(v)
 	if err != nil {
         utils.Log.Error(err.Error())
-		return err
+		panic(err)
 	}
 	return nil
 }
