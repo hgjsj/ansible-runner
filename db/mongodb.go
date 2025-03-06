@@ -5,9 +5,9 @@ import (
 	"context"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // MongoDB represents a MongoDB configuration.
@@ -114,26 +114,39 @@ func NewMongoClient() *MongoDB {
     return MongoClient
 }
 
-func (m *MongoDB) Persist(collection string, keyFilter string, value any) (string, error){
+func (m *MongoDB) Persist(collection string, keyFilter string, value any) error{
+	objID, err := primitive.ObjectIDFromHex(keyFilter)
+
+	if err != nil{
+		utils.Log.Error(err.Error())
+		return err
+	}
     update := bson.M{
         "$set": value,
     }
 	updateOptions := options.Update().SetUpsert(true)
-	filter := bson.M{"_id": keyFilter}
-	res, err := m.mongoClient.Database(m.db).Collection(collection).UpdateOne(m.c, filter, update, updateOptions)
+	filter := bson.M{"_id": objID}
+	_, err = m.mongoClient.Database(m.db).Collection(collection).UpdateOne(m.c, filter, update, updateOptions)
 	if err != nil {
 		utils.Log.Error(err.Error())
-		return "", err
+		return err
 	}
-	return res.UpsertedID.(primitive.ObjectID).Hex(), err
+	return nil
 }
 
 func (m *MongoDB) Retrieve(collection string, keyFilter string, v any) (error) {
-	filter := bson.M{"_id": keyFilter}
-	err := m.mongoClient.Database(m.db).Collection(collection).FindOne(m.c, filter).Decode(v)
+	objID, err := primitive.ObjectIDFromHex(keyFilter)
+
+	if err != nil{
+		utils.Log.Error(err.Error())
+		return err
+	}
+
+	filter := bson.M{"_id": objID}
+	err = m.mongoClient.Database(m.db).Collection(collection).FindOne(m.c, filter).Decode(v)
 	if err != nil {
         utils.Log.Error(err.Error())
-		panic(err)
+		return err
 	}
 	return nil
 }

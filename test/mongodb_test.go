@@ -12,7 +12,7 @@ func init() {
 	configs.LoadConfig("../")
 }
 
-var job_id string
+var job_id string = "67c95cc14ebf8fbf25025949"
 func TestPersistJob(t *testing.T) {
 	cli := db.NewMongoClient()
 
@@ -20,11 +20,10 @@ func TestPersistJob(t *testing.T) {
 	job.Status = "scheduled"
 	job.Step = "pre job before"
 	job.Playbook = "pre_job_run.yml"
-	if id, err := cli.Persist(cli.JobCollection, "", job); err != nil {
+	if err := cli.Persist(cli.JobCollection, job_id, job); err != nil {
 		t.Fatalf("insert doc to mongodb failed with err %s", err.Error())
 	} else {
 		t.Log(fmt.Sprintf("insert doc id %s to mongodb successful", job.ID.Hex()))
-		t.Log(fmt.Sprintf("insert doc id %s to mongodb successful", id))
 		job_id = job.ID.Hex()
 	}
 }
@@ -32,13 +31,16 @@ func TestPersistJob(t *testing.T) {
 func TestRetrieveJob(t *testing.T) {
 	cli := db.NewMongoClient()
 	job := new(models.AnsibleJob)
+
 	if err := cli.Retrieve(cli.JobCollection, job_id, job); err != nil {
 		t.Fatalf("get doc to mongodb failed with err %s", err.Error())
+		return
+	} 
+
+	if  job.Status == "scheduled" && job.Step == "pre job before" && job.Playbook == "pre_job_run.yml" {
+		t.Log("get doc is the same as origin")
 	} else {
-		if  job.Status == "scheduled" && job.Step == "pre job before" && job.Playbook == "pre_job_run.yml" {
-			t.Log("get doc is the same as origin")
-		} else {
-			t.Fatal("get doc is not the same as origin")
-		}
+		t.Fatal("get doc is not the same as origin")
 	}
+	
 }

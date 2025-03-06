@@ -146,7 +146,7 @@ func (i *Inventory) ToYaml(inventoryFile string) error {
 // NewInventory creates a new Ansible inventory.
 func NewAnsibleJob() *AnsibleJob { 
 	j := new(AnsibleJob)
-	//j.ID = primitive.NewObjectID()
+	j.ID = primitive.NewObjectID()
 	return j
 }
 

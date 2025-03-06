@@ -60,7 +60,7 @@ func LaunchPlaybook(c *gin.Context) {
 	aj := models.NewAnsibleJob()
 	aj.Playbook = requestBody.Playbook
 	aj.Status = models.Scheduled
-	if _, err := services.SaveJob(aj); err != nil {
+	if err := services.SaveJob(aj); err != nil {
 		utils.Log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),

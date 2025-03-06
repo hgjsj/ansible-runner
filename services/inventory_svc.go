@@ -26,11 +26,11 @@ func ListInventory(collection string) ([]models.Inventory, error) {
 }
 
 func CreateInventory(i *models.Inventory) (string, error) {
-	id, err := db.NewMongoClient().Persist(db.NewMongoClient().InventoryCollection, i.ID.Hex(), i)
+	err := db.NewMongoClient().Persist(db.NewMongoClient().InventoryCollection, i.ID.Hex(), i)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		return "", err
 	}
 
-	return id, nil
+	return i.ID.Hex(), nil
 }
