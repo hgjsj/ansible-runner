@@ -18,7 +18,7 @@ func GetInventory(id string) (*models.Inventory, error) {
 }
 
 func ListInventory(collection string) ([]models.Inventory, error) {
-	res, err := db.ListDocuments[models.Inventory](db.NewMongoClient(), collection, bson.D{{"id", 1}, {"name", 1}})
+	res, err := db.ListDocuments[models.Inventory](db.NewMongoClient(), collection, bson.D{{"_id", 1}, {"name", 1}})
 	if err != nil {
 		return nil, fmt.Errorf(err.Error())
 	}

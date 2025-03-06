@@ -35,15 +35,15 @@ func GetInventory(c *gin.Context) {
 }
 
 func CreateInventory(c *gin.Context) {
-	var requestBody models.Inventory
-	if err := c.ShouldBindJSON(&requestBody); err != nil {
+	requestBody := models.NewInventory(false) 
+	if err := c.ShouldBindJSON(requestBody); err != nil {
 		utils.Log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request body",
 		})
 		return
 	}
-	if _, err := services.CreateInventory(&requestBody); err != nil {
+	if _, err := services.CreateInventory(requestBody); err != nil {
 		utils.Log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Invalid request body",

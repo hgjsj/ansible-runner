@@ -32,7 +32,7 @@ func SaveJob(job *models.AnsibleJob) error {
 }
 
 func ListJobs(collection string) ([]models.AnsibleJob, error) {
-	res, err := db.ListDocuments[models.AnsibleJob](db.NewMongoClient(),collection, bson.D{{"id", 1}, {"playbook", 1}})
+	res, err := db.ListDocuments[models.AnsibleJob](db.NewMongoClient(),collection, bson.D{{"_id", 1}, {"playbook", 1}})
 	if err != nil {
 		return nil, fmt.Errorf(err.Error())
 	}
