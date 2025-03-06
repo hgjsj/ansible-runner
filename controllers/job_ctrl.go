@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"ansible-runner/db"
 	"ansible-runner/models"
 	"ansible-runner/services"
 	"ansible-runner/utils"
 	"fmt"
 	"net/http"
 	"time"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,11 +34,25 @@ func GetJob(c *gin.Context) {
 		return
 	}
 	utils.Log.Info(fmt.Sprintf("Get job %s and response", job.ID))
-	var responseJob = JobResponse{ID: job.ID, Status: job.Status, Step: job.Step, Output: job.Output, Err: job.Error,
+	var responseJob = JobResponse{ID: job.ID.Hex(), Status: job.Status, Step: job.Step, Output: job.Output, Err: job.Error,
 		StartAt: job.StartTime.Format(time.RFC3339)}
 	if job.EndTime.IsZero() == false {
 		responseJob.EndAt = job.EndTime.Format(time.RFC3339)
 	}
 	c.JSON(http.StatusOK, responseJob)
 	gin.Logger()
+}
+
+
+// ListJobsByName handles the request to list jobs by job name.
+func ListJobs(c *gin.Context) {
+	j, err := services.ListJobs(db.NewMongoClient().JobCollection)
+
+	if err != nil {
+		utils.Log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	utils.Log.Info("List inventory is ok and response")
+	c.JSON(http.StatusOK, j)
 }

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
 	"github.com/spf13/viper"
 )
 
@@ -56,7 +57,7 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 				var preJob = Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
 				job.Status = models.Preparing
 				job.Step = "Pre-job"
-				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID, job)
+				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
 				o, e := preJob.Run(ansible)
 				if e != nil {
 					job.Status = models.Failed
@@ -65,7 +66,7 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 					job.Status = models.Prepared
 					job.Output = o
 				}
-				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID, job)
+				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
 				
 				c <- job
 			} else if job.Status == models.Prepared {
@@ -73,9 +74,9 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 				job.Status = models.Running
 				job.Step = "Job"
 				job.Playbook = playbook.Name
-				var signedCert = filepath.Join(viper.GetString("job.baseDir"), job.ID, "p4s_signed_cert")
+				var signedCert = filepath.Join(viper.GetString("job.baseDir"), job.ID.Hex(), "p4s_signed_cert")
 				ansible.Args = append(ansible.Args, fmt.Sprintf("--private-key=%s", signedCert))
-				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID, job)
+				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
 				o, e := playbook.Run(ansible)
 				if e != nil {
 					utils.Log.Error(e.Error())
@@ -85,14 +86,14 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 					job.Status = models.Completed
 					job.Output = o
 				}
-				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID, job)
+				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
 				
 				c <- job
 			} else {
                 job.EndTime = time.Now()
-                db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID, job)
+                db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
 				// Run Clean up job
-				if err := os.RemoveAll(filepath.Join(viper.GetString("job.baseDir"), job.ID)); err != nil {
+				if err := os.RemoveAll(filepath.Join(viper.GetString("job.baseDir"), job.ID.Hex())); err != nil {
 					utils.Log.Error(err.Error())
 				}
 				break outloop
@@ -105,15 +106,14 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 // RunPlaybook launches the specified playbook.
 func RunPlaybook(p string, j string, i *models.Inventory) (*models.AnsibleJob, error) {
 	var ansible = models.NewAnsible("playbook")
-	job := new(models.AnsibleJob)
-	job.ID = j
+	job := models.NewAnsibleJob()
 	job.Status = "scheduled"
 	job.Playbook = p
     job.StartTime = time.Now()
 
-	var inventory = models.NewInventory()
-	if i.ID != "" {
-		err := db.NewMongoClient().Retrieve(db.NewMongoClient().InventoryCollection, i.ID, i)
+	var inventory = models.NewInventory(true)
+	if ! i.ID.IsZero() {
+		err := db.NewMongoClient().Retrieve(db.NewMongoClient().InventoryCollection, i.ID.Hex(), i)
 		
 		if err != nil {
 			utils.Log.Error(err.Error())
@@ -126,19 +126,19 @@ func RunPlaybook(p string, j string, i *models.Inventory) (*models.AnsibleJob, e
 	utils.Log.Info(fmt.Sprintf("Add localhost %s to inventory", inventory.Localhost.Name))
 
 	var b = viper.GetString("job.baseDir")	
-	if err := os.MkdirAll(filepath.Join(b, job.ID), os.ModePerm); err != nil {
+	if err := os.MkdirAll(filepath.Join(b, job.ID.Hex()), os.ModePerm); err != nil {
 		utils.Log.Error(err.Error())
 		return nil, err
 	}
 
-	 var inventoryFile = filepath.Join(b, job.ID, "hosts.yml")
+	 var inventoryFile = filepath.Join(b, job.ID.Hex(), "hosts.yml")
 	if err := inventory.ToYaml(inventoryFile); err != nil {
 		utils.Log.Error(err.Error())
 		return nil, err
 	}
 
 	ansible.Args = append(ansible.Args, fmt.Sprintf("--inventory-file=%s", inventoryFile))
-	ansible.Args = append(ansible.Args, fmt.Sprintf("--extra-vars=job_dir=%s", filepath.Join(b, job.ID)))	
+	ansible.Args = append(ansible.Args, fmt.Sprintf("--extra-vars=job_dir=%s", filepath.Join(b, job.ID.Hex())))	
 	done := make(chan *models.AnsibleJob, 1)
 	done <- job
 	go jobHandler(done, ansible)

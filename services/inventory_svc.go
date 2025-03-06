@@ -5,8 +5,7 @@ import (
 	"ansible-runner/models"
 	"ansible-runner/utils"
 	"fmt"
-
-	"github.com/google/uuid"
+    "go.mongodb.org/mongo-driver/bson"
 )
 
 func GetInventory(id string) (*models.Inventory, error) {
@@ -19,21 +18,19 @@ func GetInventory(id string) (*models.Inventory, error) {
 }
 
 func ListInventory(collection string) ([]models.Inventory, error) {
-	res, err := db.NewMongoClient().ListAllDocuments(collection)
+	res, err := db.ListDocuments[models.Inventory](db.NewMongoClient(), collection, bson.D{{"id", 1}, {"name", 1}})
 	if err != nil {
 		return nil, fmt.Errorf(err.Error())
 	}
 	return res, nil
 }
 
-func CreateInventory(i *models.Inventory) error {
-	i.ID = uuid.New().String()
-
-	err := db.NewMongoClient().Persist(db.NewMongoClient().InventoryCollection, i.ID, i)
+func CreateInventory(i *models.Inventory) (string, error) {
+	id, err := db.NewMongoClient().Persist(db.NewMongoClient().InventoryCollection, i.ID.Hex(), i)
 	if err != nil {
 		utils.Log.Error(err.Error())
-		return err
+		return "", err
 	}
 
-	return nil
+	return id, nil
 }

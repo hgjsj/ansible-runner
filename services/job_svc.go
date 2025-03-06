@@ -4,6 +4,8 @@ import (
 	"ansible-runner/db"
 	"ansible-runner/models"
 	"fmt"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // GetJob retrieves a job by its ID.
@@ -25,6 +27,14 @@ func GetJobInventory(id string) (*models.Inventory, error) {
 	}
 }
 
-func SaveJob(job *models.AnsibleJob) error {
-	return db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID, job)
+func SaveJob(job *models.AnsibleJob) (string, error) {
+	return db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
+}
+
+func ListJobs(collection string) ([]models.AnsibleJob, error) {
+	res, err := db.ListDocuments[models.AnsibleJob](db.NewMongoClient(),collection, bson.D{{"id", 1}, {"playbook", 1}})
+	if err != nil {
+		return nil, fmt.Errorf(err.Error())
+	}
+	return res, nil
 }

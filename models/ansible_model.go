@@ -4,12 +4,17 @@ import (
 	"ansible-runner/utils"
 	"fmt"
 	"os"
-	"time"
 	"path/filepath"
+	"time"
+
 	"github.com/spf13/viper"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"gopkg.in/yaml.v3"
 )
 
+type dbBase struct{
+	ID    primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+}
 // Ansible represents an Ansible configuration.
 type Ansible struct {
 	Cmd  string
@@ -28,7 +33,7 @@ func NewAnsible(exe string) *Ansible {
 
 // AnsibleJob represents a job that runs a playbook.
 type AnsibleJob struct {
-	ID     string `json:"id,omitempty"`
+	dbBase
 	Playbook string `json:"playbook,omitempty"`
 	Status string `json:"status,omitempty"`
 	Output string `json:"output,omitempty"`
@@ -66,7 +71,7 @@ type Group struct {
 
 // Inventory represents an Ansible inventory.
 type Inventory struct {
-	ID		string  `json:"id,omitempty"`
+	dbBase
 	Name    string  `json:"name,omitempty"`
 	Localhost *Host    `json:"localhost,omitempty"`
 	Groups    []Group `json:"groups,omitempty"`
@@ -139,11 +144,21 @@ func (i *Inventory) ToYaml(inventoryFile string) error {
 }
 
 // NewInventory creates a new Ansible inventory.
-func NewInventory() *Inventory { 
-	return &Inventory{
-		Localhost: &Host{
-			Name: "localhost",
-			Vars: map[string]string{"ansible_connection": "local"},
-		},
+func NewAnsibleJob() *AnsibleJob { 
+	j := new(AnsibleJob)
+	//j.ID = primitive.NewObjectID()
+	return j
+}
+
+// NewInventory creates a new Ansible inventory.
+func NewInventory(localhost bool) *Inventory { 
+	i := new(Inventory)
+	i.ID = primitive.NewObjectID()
+	if localhost {
+		h := new(Host)
+		h.Name = "localhost"
+		h.Vars =map[string]string{"ansible_connection": "local"}
+		i.Localhost = h
 	}
+	return i
 }

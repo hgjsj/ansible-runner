@@ -1,11 +1,11 @@
 package db
 
 import (
-	"ansible-runner/models"
 	"ansible-runner/utils"
 	"context"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -114,18 +114,18 @@ func NewMongoClient() *MongoDB {
     return MongoClient
 }
 
-func (m *MongoDB) Persist(collection string, keyFilter string, value any) error{
+func (m *MongoDB) Persist(collection string, keyFilter string, value any) (string, error){
     update := bson.M{
         "$set": value,
     }
 	updateOptions := options.Update().SetUpsert(true)
-	filter := bson.M{"id": keyFilter}
-	_, err := m.mongoClient.Database(m.db).Collection(collection).UpdateOne(m.c, filter, update, updateOptions)
-	return err
+	filter := bson.M{"_id": keyFilter}
+	res, err := m.mongoClient.Database(m.db).Collection(collection).UpdateOne(m.c, filter, update, updateOptions)
+	return res.UpsertedID.(primitive.ObjectID).Hex(), err
 }
 
 func (m *MongoDB) Retrieve(collection string, keyFilter string, v any) (error) {
-	filter := bson.M{"id": keyFilter}
+	filter := bson.M{"_id": keyFilter}
 	err := m.mongoClient.Database(m.db).Collection(collection).FindOne(m.c, filter).Decode(v)
 	if err != nil {
         utils.Log.Error(err.Error())
@@ -134,10 +134,8 @@ func (m *MongoDB) Retrieve(collection string, keyFilter string, v any) (error) {
 	return nil
 }
 
-
-func (m *MongoDB) ListAllDocuments(collection string) ([] models.Inventory, error) {
-    var results = make([]models.Inventory, 0)
-	projection := bson.D{{"id", 1}, {"name", 1}}
+func ListDocuments[T any](m *MongoDB, collection string, projection bson.D) ([]T, error) {
+    var results []T
 
     cursor, err := m.mongoClient.Database(m.db).Collection(collection).Find(m.c, bson.M{}, options.Find().SetProjection(projection))
     if err != nil {
@@ -147,7 +145,7 @@ func (m *MongoDB) ListAllDocuments(collection string) ([] models.Inventory, erro
     defer cursor.Close(m.c)
 
     for cursor.Next(m.c) {
-        var result models.Inventory
+        var result T
         if err := cursor.Decode(&result); err != nil {
             utils.Log.Error("Failed to decode document", "error", err)
             return nil, err
@@ -162,6 +160,7 @@ func (m *MongoDB) ListAllDocuments(collection string) ([] models.Inventory, erro
 
     return results, nil
 }
+
 
 // Close closes the MongoDB connection.
 func (m *MongoDB) Close() {

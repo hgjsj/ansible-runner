@@ -43,7 +43,7 @@ func CreateInventory(c *gin.Context) {
 		})
 		return
 	}
-	if err := services.CreateInventory(&requestBody); err != nil {
+	if _, err := services.CreateInventory(&requestBody); err != nil {
 		utils.Log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Invalid request body",
