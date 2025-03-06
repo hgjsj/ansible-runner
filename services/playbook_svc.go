@@ -104,16 +104,17 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 }
 
 // RunPlaybook launches the specified playbook.
-func RunPlaybook(p string, j string, i *models.Inventory) (*models.AnsibleJob, error) {
-	var ansible = models.NewAnsible("playbook")
-	job := models.NewAnsibleJob()
-	job.Status = "scheduled"
-	job.Playbook = p
+func RunPlaybook(j string, i *models.Inventory) (*models.AnsibleJob, error) {
+	job, err := db.Retrieve[models.AnsibleJob](db.NewMongoClient(),db.NewMongoClient().JobCollection, j)
+	if err != nil{
+		utils.Log.Error(err.Error())
+		return nil, err
+	} 
     job.StartTime = time.Now()
 
 	var inventory = models.NewInventory(true)
 	if ! i.ID.IsZero() {
-		err := db.NewMongoClient().Retrieve(db.NewMongoClient().InventoryCollection, i.ID.Hex(), i)
+		i, err := db.Retrieve[models.Inventory](db.NewMongoClient(),db.NewMongoClient().InventoryCollection, i.ID.Hex())
 		
 		if err != nil {
 			utils.Log.Error(err.Error())
@@ -137,6 +138,7 @@ func RunPlaybook(p string, j string, i *models.Inventory) (*models.AnsibleJob, e
 		return nil, err
 	}
 
+	var ansible = models.NewAnsible("playbook")
 	ansible.Args = append(ansible.Args, fmt.Sprintf("--inventory-file=%s", inventoryFile))
 	ansible.Args = append(ansible.Args, fmt.Sprintf("--extra-vars=job_dir=%s", filepath.Join(b, job.ID.Hex())))	
 	done := make(chan *models.AnsibleJob, 1)

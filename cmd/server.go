@@ -4,7 +4,6 @@ import (
 	"ansible-runner/configs"
 	"ansible-runner/db"
 	"ansible-runner/routers"
-	"ansible-runner/tasks"
 	"ansible-runner/utils"
 	"os"
 	"os/signal"
@@ -21,7 +20,6 @@ func cleanup(cmd *cobra.Command, args []string) {
 	utils.Log.Info("Cleanup and shutting down server...")
 	routers.ShutDown()
 	db.MongoClient.Close()
-	tasks.NewAsynqClient().Close()
 	utils.CleanUp()
 }
 
@@ -29,7 +27,7 @@ var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Launch an HTTP server to accept requests to schedule  Ansible jobs",
 	Run: func(cmd *cobra.Command, args []string) {
-		utils.InitLogger("server.log")
+		utils.InitLogger("./logs/server.log")
 		configs.LoadConfig("./")
 		routers.Server()
 	},

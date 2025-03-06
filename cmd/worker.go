@@ -11,7 +11,7 @@ var workerCmd = &cobra.Command{
 	Use:   "worker",
 	Short: "Launch a worker instance to hanle an Ansible jobs",
 	Run: func(cmd *cobra.Command, args []string) {
-		utils.InitLogger("worker.log")
+		utils.InitLogger("./logs/worker.log")
 		configs.LoadConfig("./")
 		routers.NewWorker()
 	},

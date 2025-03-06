@@ -12,9 +12,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type dbBase struct{
-	ID    primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-}
 // Ansible represents an Ansible configuration.
 type Ansible struct {
 	Cmd  string
@@ -33,7 +30,7 @@ func NewAnsible(exe string) *Ansible {
 
 // AnsibleJob represents a job that runs a playbook.
 type AnsibleJob struct {
-	dbBase
+	ID    primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	Playbook string `json:"playbook,omitempty"`
 	Status string `json:"status,omitempty"`
 	Output string `json:"output,omitempty"`
@@ -71,7 +68,7 @@ type Group struct {
 
 // Inventory represents an Ansible inventory.
 type Inventory struct {
-	dbBase
+	ID    primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	Name    string  `json:"name,omitempty"`
 	Localhost *Host    `json:"localhost,omitempty"`
 	Groups    []Group `json:"groups,omitempty"`
@@ -144,9 +141,12 @@ func (i *Inventory) ToYaml(inventoryFile string) error {
 }
 
 // NewInventory creates a new Ansible inventory.
-func NewAnsibleJob() *AnsibleJob { 
+func NewAnsibleJob(initialID bool) *AnsibleJob { 
 	j := new(AnsibleJob)
-	j.ID = primitive.NewObjectID()
+	if initialID{
+		j.ID = primitive.NewObjectID()
+	}
+	
 	return j
 }
 

@@ -9,8 +9,8 @@ import (
 )
 
 func GetInventory(id string) (*models.Inventory, error) {
-	i := &models.Inventory{}
-	if err := db.NewMongoClient().Retrieve(db.NewMongoClient().InventoryCollection, id, i); err != nil {
+	i, err := db.Retrieve[models.Inventory](db.NewMongoClient(), db.NewMongoClient().InventoryCollection, id)
+	if err != nil {
 		return nil, fmt.Errorf("inventory %s not found", id)
 	} else {
 		return i, nil

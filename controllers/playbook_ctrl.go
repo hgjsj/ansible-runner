@@ -48,16 +48,8 @@ func LaunchPlaybook(c *gin.Context) {
 		return
 	}
 
-	utils.Log.Info("Get payload from request is ok")
-	_, err := tasks.NewAsynqClient().EnqueueJobTask(requestBody.Playbook, &requestBody.Inventory)
-	if err != nil {
-		utils.Log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-	aj := models.NewAnsibleJob()
+	// save ansible job to db
+	aj := models.NewAnsibleJob(true)
 	aj.Playbook = requestBody.Playbook
 	aj.Status = models.Scheduled
 	if err := services.SaveJob(aj); err != nil {
@@ -67,6 +59,18 @@ func LaunchPlaybook(c *gin.Context) {
 		})
 		return
 	}
+
+	// Send message to queue
+	utils.Log.Info("Get payload from request is ok")
+	_, err := tasks.NewAsynqClient().EnqueueJobTask(requestBody.Playbook, &requestBody.Inventory)
+	if err != nil {
+		utils.Log.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	utils.Log.Info("Run playbook is ok and response")
 	var responseJob = JobResponse{ID: aj.ID.Hex(), Status: aj.Status}
 	c.JSON(http.StatusOK, responseJob)

@@ -5,9 +5,9 @@ import (
 	"context"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // MongoDB represents a MongoDB configuration.
@@ -134,21 +134,22 @@ func (m *MongoDB) Persist(collection string, keyFilter string, value any) error{
 	return nil
 }
 
-func (m *MongoDB) Retrieve(collection string, keyFilter string, v any) (error) {
+func  Retrieve[T any](m *MongoDB,collection string, keyFilter string) (*T, error) {
+	var res T
 	objID, err := primitive.ObjectIDFromHex(keyFilter)
 
 	if err != nil{
 		utils.Log.Error(err.Error())
-		return err
+		return &res, err
 	}
 
 	filter := bson.M{"_id": objID}
-	err = m.mongoClient.Database(m.db).Collection(collection).FindOne(m.c, filter).Decode(v)
+	err = m.mongoClient.Database(m.db).Collection(collection).FindOne(m.c, filter).Decode(&res)
 	if err != nil {
         utils.Log.Error(err.Error())
-		return err
+		return &res, err
 	}
-	return nil
+	return &res, nil
 }
 
 func ListDocuments[T any](m *MongoDB, collection string, projection bson.D) ([]T, error) {

@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/spf13/viper"
 )
@@ -57,12 +56,11 @@ func NewAsyncServer() *AsynqServer {
 
 type JobTask struct {
 	ID        string           `json:"id,omitempty"`
-	Playbook  string           `json:"playbook"`
 	Inventory models.Inventory `json:"inventory"`
 }
 
-func (c *AsynqClient) EnqueueJobTask(p string, i *models.Inventory) (string, error) {
-	jobTask := JobTask{Playbook: p, Inventory: *i, ID: uuid.New().String()}
+func (c *AsynqClient) EnqueueJobTask(id string, i *models.Inventory) (string, error) {
+	jobTask := JobTask{ Inventory: *i, ID: id}
 	b, err := json.Marshal(jobTask)
 	if err != nil {
 		utils.Log.Error(err.Error())
@@ -83,7 +81,7 @@ func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 		utils.Log.Error(err.Error())
 		return err
 	}
-	job, err := services.RunPlaybook(p.Playbook, p.ID, &p.Inventory)
+	job, err := services.RunPlaybook(p.ID, &p.Inventory)
 	if err != nil {
 		utils.Log.Error(err.Error())
 	}
