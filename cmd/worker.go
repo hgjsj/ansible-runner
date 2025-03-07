@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"ansible-runner/configs"
-	"ansible-runner/routers"
 	"ansible-runner/utils"
+	"ansible-runner/tasks"
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +13,8 @@ var workerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		utils.InitLogger("./logs/worker.log")
 		configs.LoadConfig("./")
-		routers.NewWorker()
+		tasks.NewAsyncServer().RegisterHandlers()
+		tasks.NewAsyncServer().LaunchServer()
 	},
 }
 
