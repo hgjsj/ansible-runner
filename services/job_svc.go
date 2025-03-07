@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // GetJob retrieves a job by its ID.
@@ -27,6 +28,9 @@ func SaveJob(job *models.AnsibleJob) error {
 func ListJobs(collection string) ([]models.AnsibleJob, error) {
 	res, err := db.ListDocuments[models.AnsibleJob](db.NewMongoClient(),collection, bson.D{{"_id", 1}, {"playbook", 1}})
 	if err != nil {
+        if err == mongo.ErrEmptySlice{
+			return make([]models.AnsibleJob, 0), nil
+		}
 		return nil, fmt.Errorf(err.Error())
 	}
 	return res, nil

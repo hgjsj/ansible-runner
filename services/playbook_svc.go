@@ -104,7 +104,7 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 }
 
 // RunPlaybook launches the specified playbook.
-func RunPlaybook(j string, i *models.Inventory) (*models.AnsibleJob, error) {
+func RunPlaybook(j string, i string) (*models.AnsibleJob, error) {
 	job, err := db.Retrieve[models.AnsibleJob](db.NewMongoClient(),db.NewMongoClient().JobCollection, j)
 	if err != nil{
 		utils.Log.Error(err.Error())
@@ -113,17 +113,17 @@ func RunPlaybook(j string, i *models.Inventory) (*models.AnsibleJob, error) {
     job.StartTime = time.Now()
 
 	var inventory = models.NewInventory(true)
-	if ! i.ID.IsZero() {
-		i, err := db.Retrieve[models.Inventory](db.NewMongoClient(),db.NewMongoClient().InventoryCollection, i.ID.Hex())
-		
-		if err != nil {
-			utils.Log.Error(err.Error())
-			return nil, err
-		}
-		utils.Log.Info(fmt.Sprintf("Get inventory name %s from mongodb", i.Name))
-		inventory.Groups = i.Groups
+
+	inv, err := db.Retrieve[models.Inventory](db.NewMongoClient(),db.NewMongoClient().InventoryCollection, i)
+	
+	if err != nil {
+		utils.Log.Error(err.Error())
+		return nil, err
 	}
-	inventory.Groups = i.Groups
+	utils.Log.Info(fmt.Sprintf("Get inventory name %s from mongodb", inv.Name))
+
+	inventory.Groups = inv.Groups
+
 	utils.Log.Info(fmt.Sprintf("Add localhost %s to inventory", inventory.Localhost.Name))
 
 	var b = viper.GetString("job.baseDir")	

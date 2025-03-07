@@ -14,8 +14,8 @@ import (
 
 // LaunchRequest represents a request to launch a playbook.
 type LaunchRequest struct {
-	Playbook  string           `json:"playbook"`
-	Inventory models.Inventory `json:"inventory"`
+	Playbook  string `json:"playbook"`
+	Inventory string `json:"inventory"`
 }
 
 var playbookList []string = []string{"p4s_account_validate.yml"}
@@ -62,7 +62,7 @@ func LaunchPlaybook(c *gin.Context) {
 
 	// Send message to queue
 	utils.Log.Info("Get payload from request is ok")
-	_, err := tasks.NewAsynqClient().EnqueueJobTask(requestBody.Playbook, &requestBody.Inventory)
+	_, err := tasks.NewAsynqClient().EnqueueJobTask(requestBody.Playbook, requestBody.Inventory)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{

@@ -1,7 +1,6 @@
 package tasks
 
 import (
-	"ansible-runner/models"
 	"ansible-runner/services"
 	"ansible-runner/utils"
 	"context"
@@ -56,11 +55,11 @@ func NewAsyncServer() *AsynqServer {
 
 type JobTask struct {
 	ID        string           `json:"id,omitempty"`
-	Inventory models.Inventory `json:"inventory"`
+	InventoryID string           `json:"inventoryid,omitempty"`
 }
 
-func (c *AsynqClient) EnqueueJobTask(id string, i *models.Inventory) (string, error) {
-	jobTask := JobTask{ Inventory: *i, ID: id}
+func (c *AsynqClient) EnqueueJobTask(id string, i string) (string, error) {
+	jobTask := JobTask{ InventoryID: i, ID: id}
 	b, err := json.Marshal(jobTask)
 	if err != nil {
 		utils.Log.Error(err.Error())
@@ -81,7 +80,7 @@ func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 		utils.Log.Error(err.Error())
 		return err
 	}
-	job, err := services.RunPlaybook(p.ID, &p.Inventory)
+	job, err := services.RunPlaybook(p.ID, p.InventoryID)
 	if err != nil {
 		utils.Log.Error(err.Error())
 	}

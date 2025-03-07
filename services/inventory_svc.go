@@ -5,7 +5,9 @@ import (
 	"ansible-runner/models"
 	"ansible-runner/utils"
 	"fmt"
-    "go.mongodb.org/mongo-driver/bson"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func GetInventory(id string) (*models.Inventory, error) {
@@ -20,6 +22,9 @@ func GetInventory(id string) (*models.Inventory, error) {
 func ListInventory(collection string) ([]models.Inventory, error) {
 	res, err := db.ListDocuments[models.Inventory](db.NewMongoClient(), collection, bson.D{{"_id", 1}, {"name", 1}})
 	if err != nil {
+		if err == mongo.ErrEmptySlice{
+			return make([]models.Inventory, 0), nil
+		}
 		return nil, fmt.Errorf(err.Error())
 	}
 	return res, nil
