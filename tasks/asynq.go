@@ -65,7 +65,7 @@ func (c *AsynqClient) EnqueueJobTask(jobid string, inventoryid string) (string, 
 		return "", err
 	}
 	task := asynq.NewTask("ansiblejob", b)
-	if _, err := c.Enqueue(task); err != nil {
+	if _, err := c.Enqueue(task, asynq.MaxRetry(0)); err != nil {
 		utils.Log.Error(err.Error())
 		return "", err
 	}

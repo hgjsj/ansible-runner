@@ -2,11 +2,16 @@ package utils
 
 import (
 	"os"
+	"runtime"
 	"log/slog"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-var Log *slog.Logger
+type Logger struct {
+	*slog.Logger
+}
+
+var Log Logger
 var lumberjackLogger *lumberjack.Logger
 
 // InitLogger initialize a log instance
@@ -21,8 +26,19 @@ func InitLogger(name string) {
 
     // Create a new slog logger with lumberjack as the output
     handler := slog.NewJSONHandler(lumberjackLogger, nil)
-    Log = slog.New(handler)
-	Log = Log.With("pid", os.Getpid())
+    Log.Logger = slog.New(handler)
+	Log.Logger = Log.Logger.With("pid", os.Getpid())
+}
+
+func (l Logger) Error(msg string, args ...any){
+	pc, file, line, ok := runtime.Caller(1)
+	if ok {
+		funcName := runtime.FuncForPC(pc).Name()
+		l.Logger.Error(msg, "file", file, "line", line, "caller", funcName, args)
+	} else {
+		l.Logger.Error(msg, args)
+	}
+	
 }
 
 func CleanUp() {
