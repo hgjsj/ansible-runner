@@ -105,6 +105,7 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 
 // RunPlaybook launches the specified playbook.
 func RunPlaybook(j string, i string) (*models.AnsibleJob, error) {
+	utils.Log.Info(fmt.Sprintf("job id is %s and inventory id is %s", j, i))
 	job, err := db.Retrieve[models.AnsibleJob](db.NewMongoClient(),db.NewMongoClient().JobCollection, j)
 	if err != nil{
 		utils.Log.Error(err.Error())
@@ -112,6 +113,7 @@ func RunPlaybook(j string, i string) (*models.AnsibleJob, error) {
 	} 
     job.StartTime = time.Now()
 
+	utils.Log.Info("retrieve job done")
 	var inventory = models.NewInventory(true)
 
 	inv, err := db.Retrieve[models.Inventory](db.NewMongoClient(),db.NewMongoClient().InventoryCollection, i)

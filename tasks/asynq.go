@@ -5,7 +5,6 @@ import (
 	"ansible-runner/utils"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/hibiken/asynq"
 	"github.com/spf13/viper"
 )
@@ -58,8 +57,8 @@ type JobTask struct {
 	InventoryID string           `json:"inventoryid,omitempty"`
 }
 
-func (c *AsynqClient) EnqueueJobTask(id string, i string) (string, error) {
-	jobTask := JobTask{ InventoryID: i, ID: id}
+func (c *AsynqClient) EnqueueJobTask(jobid string, inventoryid string) (string, error) {
+	jobTask := JobTask{ InventoryID: inventoryid, ID: jobid}
 	b, err := json.Marshal(jobTask)
 	if err != nil {
 		utils.Log.Error(err.Error())
@@ -75,16 +74,17 @@ func (c *AsynqClient) EnqueueJobTask(id string, i string) (string, error) {
 
 func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 	var p JobTask
-
+	utils.Log.Info("Unmarsh job task start")
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		utils.Log.Error(err.Error())
 		return err
 	}
-	job, err := services.RunPlaybook(p.ID, p.InventoryID)
+	utils.Log.Info("Unmarsh job task done")
+	_, err := services.RunPlaybook(p.ID, p.InventoryID)
 	if err != nil {
 		utils.Log.Error(err.Error())
+		return err
 	}
-	utils.Log.Info(fmt.Sprintf("Job %s starts to run", job.ID))
 	return nil
 }
 

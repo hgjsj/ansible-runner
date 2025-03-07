@@ -62,7 +62,7 @@ func LaunchPlaybook(c *gin.Context) {
 
 	// Send message to queue
 	utils.Log.Info("Get payload from request is ok")
-	_, err := tasks.NewAsynqClient().EnqueueJobTask(requestBody.Playbook, requestBody.Inventory)
+	_, err := tasks.NewAsynqClient().EnqueueJobTask(aj.ID.Hex(), requestBody.Inventory)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
