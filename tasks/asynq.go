@@ -5,10 +5,11 @@ import (
 	"ansible-runner/utils"
 	"context"
 	"encoding/json"
+	"fmt"
+
 	"github.com/hibiken/asynq"
 	"github.com/spf13/viper"
 )
-
 
 // type AsynqServer struct {
 // 	s *asynq.Server
@@ -27,6 +28,7 @@ func newAsyncServer() *asynq.Server {
 	password, err := utils.Decrypt(viper.GetString("redis.password"))
 	if err != nil {
 		utils.Log.Error(err.Error())
+		return nil
 	}
 	asynqServer = asynq.NewServer(asynq.RedisClientOpt{Addr: redisAddr, Password: password}, asynq.Config{Concurrency: 5})
 	mux = asynq.NewServeMux()
@@ -57,6 +59,10 @@ func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 
 
 func LaunchServer() error {
+	if newAsyncServer() == nil  {
+		utils.Log.Error("can not create asynq server")
+		return fmt.Errorf("can not create asynq server")
+	}
 	mux.HandleFunc("ansiblejob", HandleAnsibleJobTask)
 	if err := newAsyncServer().Run(mux); err != nil {
 		utils.Log.Error(err.Error())

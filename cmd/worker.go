@@ -13,7 +13,9 @@ var workerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		utils.InitLogger("./logs/worker.log")
 		configs.LoadConfig("./")
-		tasks.LaunchServer()
+		if err := tasks.LaunchServer(); err != nil{
+			panic(err)
+		}
 	},
 }
 
