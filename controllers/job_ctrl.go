@@ -52,10 +52,10 @@ func ListJobs(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	jobList := make([]JobResponse, len(j))
+	jobList := make([]JobResponse, 0, len(j))
 
 	for _, job := range j {
-		jobList = append(jobList, JobResponse{ID: job.ID.Hex(), Status: job.Status, Playbook: job.Playbook})
+		jobList = append(jobList, JobResponse{ID: job.ID.Hex(), Playbook: job.Playbook, Status: job.Status})
 	}
 	utils.Log.Info("List inventory is ok and response")
 	c.JSON(http.StatusOK, jobList)
