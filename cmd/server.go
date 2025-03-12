@@ -4,6 +4,7 @@ import (
 	"ansible-runner/configs"
 	"ansible-runner/controllers"
 	"ansible-runner/db"
+	"ansible-runner/tasks"
 	"ansible-runner/utils"
 	"context"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,6 +32,7 @@ func cleanup(cmd *cobra.Command, args []string) {
 		defer cancel()
 		srv.Shutdown(ctx)
 	}
+	tasks.CloseClient()
 	db.MongoClient.Close()
 	utils.CleanUp()
 }
