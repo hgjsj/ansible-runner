@@ -41,7 +41,6 @@ func LaunchPlaybook(c *gin.Context) {
 
 	// Check if the playbook is in the list of available playbooks.
 	if slices.Contains(playbookList, requestBody.Playbook) == false {
-		utils.Log.Error(fmt.Sprintf("Playbook %s is not in the list of available playbooks", requestBody.Playbook))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("Playbook %s is not in the list of available playbooks", requestBody.Playbook),
 		})
@@ -53,7 +52,6 @@ func LaunchPlaybook(c *gin.Context) {
 	aj.Playbook = requestBody.Playbook
 	aj.Status = models.Scheduled
 	if err := services.SaveJob(aj); err != nil {
-		utils.Log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -64,7 +62,6 @@ func LaunchPlaybook(c *gin.Context) {
 	utils.Log.Info("Get payload from request is ok")
 	_, err := tasks.EnqueueJobTask(aj.ID.Hex(), requestBody.Inventory)
 	if err != nil {
-		utils.Log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})

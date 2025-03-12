@@ -125,6 +125,7 @@ func (i *Inventory) ToYaml(inventoryFile string) error {
 
     file, err := os.Create(inventoryFile)
 	if err != nil {
+		utils.Log.Error(err.Error())
 		return err
 	}
 	defer file.Close()

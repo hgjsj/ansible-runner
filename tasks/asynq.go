@@ -10,14 +10,16 @@ import (
 )
 
 
-type AsynqServer struct {
-	s *asynq.Server
-	m *asynq.ServeMux
-}
+// type AsynqServer struct {
+// 	s *asynq.Server
+// 	m *asynq.ServeMux
+// }
 
-var asynqServer *AsynqServer
+var asynqServer *asynq.Server
+var mux *asynq.ServeMux 
 
-func NewAsyncServer() *AsynqServer {
+
+func newAsyncServer() *asynq.Server {
 	if asynqServer != nil {
 		return asynqServer
 	}
@@ -25,15 +27,14 @@ func NewAsyncServer() *AsynqServer {
 	password, err := utils.Decrypt(viper.GetString("redis.password"))
 	if err != nil {
 		utils.Log.Error(err.Error())
-		panic(err)
 	}
-
-	asynqServer = &AsynqServer{s: asynq.NewServer(asynq.RedisClientOpt{Addr: redisAddr, Password: password}, asynq.Config{Concurrency: 5}), m: asynq.NewServeMux()}
+	asynqServer = asynq.NewServer(asynq.RedisClientOpt{Addr: redisAddr, Password: password}, asynq.Config{Concurrency: 5})
+	mux = asynq.NewServeMux()
 	return asynqServer
 }
 
 type JobTask struct {
-	ID        string           `json:"id,omitempty"`
+	ID          string           `json:"id,omitempty"`
 	InventoryID string           `json:"inventoryid,omitempty"`
 }
 
@@ -49,28 +50,26 @@ func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 	utils.Log.Info("Unmarsh job task done")
 	_, err := services.RunPlaybook(p.ID, p.InventoryID)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+
+func LaunchServer() error {
+	mux.HandleFunc("ansiblejob", HandleAnsibleJobTask)
+	if err := newAsyncServer().Run(mux); err != nil {
 		utils.Log.Error(err.Error())
 		return err
 	}
 	return nil
 }
 
-func (s *AsynqServer) RegisterHandlers() {
-	s.m.HandleFunc("ansiblejob", HandleAnsibleJobTask)
-}
-
-func (s *AsynqServer) LaunchServer() {
-	if err := s.s.Run(s.m); err != nil {
-		utils.Log.Error(err.Error())
-	}
-}
-
 // Close closes the MongoDB connection.
-func (s *AsynqServer) Close() {
-	// close client connection
-	
-    if s != nil && s.s != nil {
-	    s.s.Shutdown()
+func Close() {
+	// close Sever connection
+    if  asynqServer != nil {
+	    asynqServer.Shutdown()
     }
 }
 

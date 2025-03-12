@@ -24,7 +24,6 @@ func (p *Playbook) Run(a *models.Ansible) (string, error) {
 	args := append(a.Args, p.Name)
 	output, err := utils.RunCommand(p.ProjectDir, a.Cmd, args...)
 	if err != nil {
-		utils.Log.Error(err.Error())
 		return "", err
 	}
 	return output, nil
@@ -79,7 +78,6 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
 				o, e := playbook.Run(ansible)
 				if e != nil {
-					utils.Log.Error(e.Error())
 					job.Status = models.Failed
 					job.Error = e.Error()
 				} else {
@@ -108,7 +106,6 @@ func RunPlaybook(j string, i string) (*models.AnsibleJob, error) {
 	utils.Log.Info(fmt.Sprintf("job id is %s and inventory id is %s", j, i))
 	job, err := db.Retrieve[models.AnsibleJob](db.NewMongoClient(),db.NewMongoClient().JobCollection, j)
 	if err != nil{
-		utils.Log.Error(err.Error())
 		return nil, err
 	} 
     job.StartTime = time.Now()
@@ -119,7 +116,6 @@ func RunPlaybook(j string, i string) (*models.AnsibleJob, error) {
 	inv, err := db.Retrieve[models.Inventory](db.NewMongoClient(),db.NewMongoClient().InventoryCollection, i)
 	
 	if err != nil {
-		utils.Log.Error(err.Error())
 		return nil, err
 	}
 	utils.Log.Info(fmt.Sprintf("Get inventory name %s from mongodb", inv.Name))
@@ -136,7 +132,6 @@ func RunPlaybook(j string, i string) (*models.AnsibleJob, error) {
 
 	 var inventoryFile = filepath.Join(b, job.ID.Hex(), "hosts.yml")
 	if err := inventory.ToYaml(inventoryFile); err != nil {
-		utils.Log.Error(err.Error())
 		return nil, err
 	}
 

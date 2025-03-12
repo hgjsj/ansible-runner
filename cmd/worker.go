@@ -13,8 +13,7 @@ var workerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		utils.InitLogger("./logs/worker.log")
 		configs.LoadConfig("./")
-		tasks.NewAsyncServer().RegisterHandlers()
-		tasks.NewAsyncServer().LaunchServer()
+		tasks.LaunchServer()
 	},
 }
 
