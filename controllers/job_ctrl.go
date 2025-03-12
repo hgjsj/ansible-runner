@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"ansible-runner/db"
-	"ansible-runner/models"
 	"ansible-runner/services"
 	"ansible-runner/utils"
 	"fmt"
@@ -15,11 +14,11 @@ import (
 // JobResponse represents a job response
 type JobResponse struct {
 	ID     string 	`json:"id,omitempty"`
+	Playbook string `json:"playbook,omitempty"`
 	Status string	`json:"status,omitempty"`
 	Step   string   `json:"step,omitempty"`
 	Output string   `json:"stdout,omitempty"`
 	Err    string   `json:"stderr,omitempty"`
-	Inventory *models.Inventory `json:"inventory,omitempty"`
 	StartAt string `json:"start_at,omitempty"`
 	EndAt string `json:"end_at,omitempty"`
 }
@@ -34,8 +33,8 @@ func GetJob(c *gin.Context) {
 		return
 	}
 	utils.Log.Info(fmt.Sprintf("Get job %s and response", job.ID))
-	var responseJob = JobResponse{ID: job.ID.Hex(), Status: job.Status, Step: job.Step, Output: job.Output, Err: job.Error,
-		StartAt: job.StartTime.Format(time.RFC3339)}
+	var responseJob = JobResponse{ID: job.ID.Hex(), Playbook: job.Playbook, Status: job.Status, 
+		Step: job.Step, Output: job.Output, Err: job.Error, StartAt: job.StartTime.Format(time.RFC3339)}
 	if job.EndTime.IsZero() == false {
 		responseJob.EndAt = job.EndTime.Format(time.RFC3339)
 	}
@@ -44,7 +43,7 @@ func GetJob(c *gin.Context) {
 }
 
 
-// ListJobsByName handles the request to list jobs by job name.
+// ListJobs handles the request to list jobs by job name.
 func ListJobs(c *gin.Context) {
 	j, err := services.ListJobs(db.NewMongoClient().JobCollection)
 
@@ -53,6 +52,11 @@ func ListJobs(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	jobList := make([]JobResponse, len(j))
+
+	for _, job := range j {
+		jobList = append(jobList, JobResponse{ID: job.ID.Hex(), Status: job.Status, Playbook: job.Playbook})
+	}
 	utils.Log.Info("List inventory is ok and response")
-	c.JSON(http.StatusOK, j)
+	c.JSON(http.StatusOK, jobList)
 }
