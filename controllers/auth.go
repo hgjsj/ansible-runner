@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func auth(server string, port int, user string, pwd string, baseDN string)  error {
+func Auth(server string, port int, user string, pwd string, baseDN string)  error {
 	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", server, port))
 	if err != nil {
 		utils.Log.Error(fmt.Sprintf("LDAP connection failed: %v", err))
@@ -46,15 +46,14 @@ func auth(server string, port int, user string, pwd string, baseDN string)  erro
 
 // AuthMiddleware is a simple authentication middleware example.
 func AuthMiddleware(c *gin.Context) {
-	// Check for an authorization header
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
+	authH := c.GetHeader("Authorization")
+	if authH == "" {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
 		return
 	}
 	// Basic authentication format: "Basic <base64 encoded string>"
 	// Extract base64 encoded credentials
-	authType, credentials, found := utils.ParseBasicAuth(authHeader)
+	authType, credentials, found := utils.ParseBasicAuth(authH)
 
 	if !found || authType != "Basic" {
 
@@ -70,16 +69,15 @@ func AuthMiddleware(c *gin.Context) {
 		return
 	}
 
-	utils.Log.Info("Username in header", username)
-	utils.Log.Info("Password in header", password)
+	utils.Log.Info(fmt.Sprintf("Username in header %s", username))
+	utils.Log.Info(fmt.Sprintf("Password in header %s", password))
 
 	// LDAP configuration
 	ldapServer := viper.GetString("ldap.server")
 	ldapPort := viper.GetInt("ldap.port")
 	baseDN := viper.GetString("ldap.baseDN")
-	utils.Log.Info("ldapserver in config", ldapServer)
-	utils.Log.Info("port in config", ldapPort)
-	err = auth(ldapServer, ldapPort, username, password, baseDN)
+
+	err = Auth(ldapServer, ldapPort, username, password, baseDN)
 	if err != nil {
 
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})

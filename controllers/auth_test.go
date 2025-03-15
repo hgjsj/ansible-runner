@@ -19,7 +19,7 @@ func TestAuth(t *testing.T) {
 	ldapServer := viper.GetString("ldap.server")
 	ldapPort := viper.GetInt("ldap.port")
 	baseDN := viper.GetString("ldap.baseDN")
-	err := auth(ldapServer, ldapPort, user, pwd, baseDN)
+	err := Auth(ldapServer, ldapPort, user, pwd, baseDN)
 	if err != nil {
 		t.Fatalf("Auth failed: %v", err)
 	}
