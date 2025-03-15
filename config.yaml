@@ -27,8 +27,7 @@ redis:
   uri: "redis://localhost:6379"
   password: 017c0141e4e1e7071b6a7513d0
 ldap:
-  server: "ldap://dcatlsecgc01.sec.entsvcs.com,ldap://dcatlsecgc02.sec.entsvcs.com"
+  server: "dcatlsecgc01.sec.entsvcs.com"
   port: 389
   baseDN: "OU=Employees,OU=Accounts,DC=sec,DC=entsvcs,DC=com"
-  bindDN: "cn=%s,OU=Employees,OU=Accounts,DC=sec,DC=entsvcs,DC=com"
-  groupDN: "cn=groups,cn=accounts,dc=example,dc=com"
+  requiredGroup: "CN=TEAM_INT_PE-ESO4SAP"

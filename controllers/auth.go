@@ -4,6 +4,7 @@ import (
 	"ansible-runner/utils"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-ldap/ldap/v3"
@@ -24,6 +25,13 @@ func Auth(server string, port int, user string, pwd string, baseDN string)  erro
 	if err != nil {
 		utils.Log.Error(fmt.Sprintf("LDAP bind failed for user %s: %v", user, err))
 		return err
+	}
+
+	// user is start with sec\\
+	if strings.HasPrefix(strings.ToLower(user), "sec\\") {
+		user = user[strings.Index(user, "\\") + 1 :]
+	} else if (strings.Contains(user, "@")) {
+		user = user[:strings.Index(user, "@")]
 	}
 
 	searchRequest := ldap.NewSearchRequest(baseDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
