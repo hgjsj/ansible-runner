@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Auth(server string, port int, user string, pwd string, baseDN string)  error {
+func Auth(server string, port int, user string, pwd string, baseDN string, group string)  error {
 	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", server, port))
 	if err != nil {
 		utils.Log.Error(fmt.Sprintf("LDAP connection failed: %v", err))
@@ -45,9 +45,12 @@ func Auth(server string, port int, user string, pwd string, baseDN string)  erro
 	for _, entry := range sr.Entries {
 		for _, memberOf := range entry.GetAttributeValues("memberOf") {
 			utils.Log.Info(fmt.Sprintf("User %s is member of %s", user, memberOf))
+			if strings.HasPrefix(strings.ToLower(memberOf), strings.ToLower(group)) {
+				return nil
+			}
 		}
 	}
-	return nil
+	return fmt.Errorf("user %s is not member of group %s", user, group)
 }
 
 
@@ -84,8 +87,10 @@ func AuthMiddleware(c *gin.Context) {
 	ldapServer := viper.GetString("ldap.server")
 	ldapPort := viper.GetInt("ldap.port")
 	baseDN := viper.GetString("ldap.baseDN")
+	requiredGroup := viper.GetString("ldap.requiredGroup")
 
-	err = Auth(ldapServer, ldapPort, username, password, baseDN)
+
+	err = Auth(ldapServer, ldapPort, username, password, baseDN, requiredGroup)
 	if err != nil {
 
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
