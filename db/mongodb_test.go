@@ -1,8 +1,7 @@
-package test
+package db
 
 import (
 	"ansible-runner/configs"
-	"ansible-runner/db"
 	"ansible-runner/models"
 	"ansible-runner/utils"
 	"fmt"
@@ -16,7 +15,7 @@ func init() {
 
 var job_id string
 func TestPersistJob(t *testing.T) {
-	cli := db.NewMongoClient()
+	cli := NewMongoClient()
 
 	job := models.NewAnsibleJob(true)
 	job.Status = "scheduled"
@@ -31,8 +30,8 @@ func TestPersistJob(t *testing.T) {
 }
 
 func TestRetrieveJob(t *testing.T) {
-	cli := db.NewMongoClient()
-	job, err := db.Retrieve[models.AnsibleJob](cli, cli.JobCollection, job_id)
+	cli := NewMongoClient()
+	job, err := Retrieve[models.AnsibleJob](cli, cli.JobCollection, job_id)
 	if err != nil {
 		t.Fatalf("get doc to mongodb failed with err %s", err.Error())
 		return

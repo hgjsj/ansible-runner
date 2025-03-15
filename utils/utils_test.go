@@ -1,14 +1,13 @@
-package test
+package utils
 
 import (
-	"ansible-runner/utils"
 	"testing"
 )
 
 func TestEncrypt(t *testing.T) {
 	plainText := "p4sautomation"
 
-	cipherText, err := utils.Encrypt(plainText)
+	cipherText, err := Encrypt(plainText)
 	if err != nil {
 		t.Fatalf("Encrypted text %s failed with err %s", plainText, err)
 	}
@@ -18,12 +17,12 @@ func TestEncrypt(t *testing.T) {
 func TestDecrypt(t *testing.T) {
 	plainText := "p4sautomation"
 
-	cipherText, err := utils.Encrypt(plainText)
+	cipherText, err := Encrypt(plainText)
 	if err != nil {
 		t.Fatalf("Encryption failed for text %s with error %s", plainText, err)
 	}
 
-	decryptedText, err := utils.Decrypt(cipherText)
+	decryptedText, err := Decrypt(cipherText)
 	if err != nil {
 		t.Fatalf("Decryption failed for text %s with error %s", cipherText, err)
 	}
@@ -38,7 +37,7 @@ func TestRunCommand(t *testing.T) {
 	cmd := "echo"
 	args := []string{"hello world"}
 
-	output, err := utils.RunCommand(cwd, cmd, args...)
+	output, err := RunCommand(cwd, cmd, args...)
 	if err != nil {
 		t.Fatalf("RunCommand failed with error: %s", err)
 	}
@@ -48,7 +47,7 @@ func TestRunCommand(t *testing.T) {
 	}
 	t.Logf("RunCommand output: %s", output)
 
-	output, err = utils.RunCommand(cwd, "ls", "-l")
+	output, err = RunCommand(cwd, "ls", "-l")
 	if err != nil {
 		t.Fatalf("RunCommand failed with error: %s", err)
 	} else {
