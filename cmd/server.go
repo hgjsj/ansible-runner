@@ -38,10 +38,12 @@ func cleanup(cmd *cobra.Command, args []string) {
 }
 
 
+
 // Server initializes the Gin router and sets up the routes.
 func server() {
 	r := gin.Default()
 	r.Use(gin.Logger())
+	r.Use(controllers.AuthMiddleware)
 	r.GET("/playbook", controllers.ListPlaybooks)
 	r.POST("/playbook/launch", controllers.LaunchPlaybook)
 	r.GET("/job/:id", controllers.GetJob)

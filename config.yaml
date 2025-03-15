@@ -26,3 +26,7 @@ legacy_db: PDC03-N1
 redis:
   uri: "redis://localhost:6379"
   password: 017c0141e4e1e7071b6a7513d0
+ldap:
+  server: "ldap://dcatlsecgc01.sec.entsvcs.com,ldap://dcatlsecgc02.sec.entsvcs.com"
+  port: 389
+  bindDN: "cn=%s,OU=Employees,OU=Accounts,DC=sec,DC=entsvcs,DC=com"

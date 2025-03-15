@@ -3,9 +3,11 @@ package utils
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 // RunCommand executes a command in the specified directory.
@@ -61,4 +63,28 @@ func Decrypt(encryptedText string) (string, error) {
     plaintext := make([]byte, len(ciphertext))
     cfb.XORKeyStream(plaintext, ciphertext)
     return string(plaintext), nil
+}
+
+// ParseBasicAuth parses the Authorization header string for Basic authentication.
+func ParseBasicAuth(authHeader string) (authType string, credentials string, ok bool) {
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) != 2 {
+		return "", "", false
+	}
+	return parts[0], parts[1], true
+}
+
+// DecodeBasicAuth decodes the base64 encoded credentials from Basic authentication.
+func DecodeBasicAuth(credentials string) (username, password string, err error) {
+	decoded, err := base64.StdEncoding.DecodeString(credentials)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid base64 encoding: %w", err)
+	}
+
+	creds := strings.SplitN(string(decoded), ":", 2)
+	if len(creds) != 2 {
+		return "", "", fmt.Errorf("invalid credentials format")
+	}
+
+	return creds[0], creds[1], nil
 }

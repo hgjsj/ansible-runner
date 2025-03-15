@@ -26,7 +26,7 @@ func SaveJob(job *models.AnsibleJob) error {
 }
 
 func ListJobs(collection string) ([]models.AnsibleJob, error) {
-	res, err := db.ListDocuments[models.AnsibleJob](db.NewMongoClient(),collection, bson.D{{"_id", 1}, {"playbook", 1}})
+	res, err := db.ListDocuments[models.AnsibleJob](db.NewMongoClient(),collection, bson.D{{"_id", 1}, {"playbook", 1}, {"status", 1}})
 	if err != nil {
         if err == mongo.ErrEmptySlice{
 			return make([]models.AnsibleJob, 0), nil
