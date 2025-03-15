@@ -32,6 +32,8 @@ func AuthMiddleware(c *gin.Context) {
 
 	// decode
 	username, password, err := utils.DecodeBasicAuth(credentials)
+	utils.Log.Info("Username in header", username)
+	utils.Log.Info("Password in header", password)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
@@ -41,6 +43,8 @@ func AuthMiddleware(c *gin.Context) {
 	// LDAP configuration
 	ldapServer := viper.GetString("ldap.server")
 	ldapPort := viper.GetInt("ldap.port")
+	utils.Log.Info("ldapserver in config", ldapServer)
+	utils.Log.Info("port in config", ldapPort)
 
 	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
 	if err != nil {
