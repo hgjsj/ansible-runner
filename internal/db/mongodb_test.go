@@ -1,19 +1,19 @@
 package db
 
 import (
-	"ansible-runner/configs"
-	"ansible-runner/models"
-	"ansible-runner/utils"
+	"ansible-runner/internal/models"
+	"ansible-runner/internal/utils"
 	"fmt"
 	"testing"
 )
 
 func init() {
-	configs.LoadConfig("../")
-	utils.InitLogger("../logs/test.log")
+	utils.LoadConfig("../../configs/config")
+	utils.InitLogger("../../logs/test.log")
 }
 
 var job_id string
+
 func TestPersistJob(t *testing.T) {
 	cli := NewMongoClient()
 
@@ -35,13 +35,13 @@ func TestRetrieveJob(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get doc to mongodb failed with err %s", err.Error())
 		return
-	} 
+	}
 
 	t.Log(fmt.Sprintf("get doc id %s from db", job.ID.Hex()))
-	if  job.Status == "scheduled" && job.Step == "pre job before" && job.Playbook == "pre_job_run.yml" {
+	if job.Status == "scheduled" && job.Step == "pre job before" && job.Playbook == "pre_job_run.yml" {
 		t.Log("get doc is the same as origin")
 	} else {
 		t.Fatal("get doc is not the same as origin")
 	}
-	
+
 }

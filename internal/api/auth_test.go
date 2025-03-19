@@ -1,15 +1,14 @@
-package controllers
+package api
 
 import (
-	"ansible-runner/configs"
-	"ansible-runner/utils"
-	"testing"
+	"ansible-runner/internal/utils"
 	"github.com/spf13/viper"
+	"testing"
 )
 
 func init() {
-	configs.LoadConfig("../")
-	utils.InitLogger("../logs/test.log")
+	utils.LoadConfig("../../configs/config")
+	utils.InitLogger("../../logs/test.log")
 }
 
 func TestAuth(t *testing.T) {

@@ -1,9 +1,8 @@
 package cmd
 
 import (
-	"ansible-runner/configs"
-	"ansible-runner/utils"
-	"ansible-runner/tasks"
+	"ansible-runner/internal/tasks"
+	"ansible-runner/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -12,8 +11,8 @@ var workerCmd = &cobra.Command{
 	Short: "Launch a worker instance to hanle an Ansible jobs",
 	Run: func(cmd *cobra.Command, args []string) {
 		utils.InitLogger("./logs/worker.log")
-		configs.LoadConfig("./")
-		if err := tasks.LaunchServer(); err != nil{
+		utils.LoadConfig("./configs/config")
+		if err := tasks.LaunchServer(); err != nil {
 			panic(err)
 		}
 	},

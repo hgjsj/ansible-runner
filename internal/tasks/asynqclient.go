@@ -1,11 +1,12 @@
 package tasks
 
 import (
-	"ansible-runner/utils"
+	"ansible-runner/internal/utils"
 	"encoding/json"
 	"github.com/hibiken/asynq"
 	"github.com/spf13/viper"
 )
+
 var asynqClient *asynq.Client
 
 func newAsynqClient() *asynq.Client {
@@ -24,8 +25,8 @@ func newAsynqClient() *asynq.Client {
 	return asynqClient
 }
 
-func  EnqueueJobTask(jobid string, inventoryid string) (string, error) {
-	jobTask := JobTask{ InventoryID: inventoryid, ID: jobid}
+func EnqueueJobTask(jobid string, inventoryid string) (string, error) {
+	jobTask := JobTask{InventoryID: inventoryid, ID: jobid}
 	b, err := json.Marshal(jobTask)
 	if err != nil {
 		utils.Log.Error(err.Error())
@@ -39,8 +40,8 @@ func  EnqueueJobTask(jobid string, inventoryid string) (string, error) {
 	return jobTask.ID, nil
 }
 
-func CloseClient(){
+func CloseClient() {
 	if asynqClient != nil {
-	    asynqClient.Close()
-    }
+		asynqClient.Close()
+	}
 }

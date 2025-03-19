@@ -1,8 +1,8 @@
 package services
 
 import (
-	"ansible-runner/db"
-	"ansible-runner/models"
+	"ansible-runner/internal/db"
+	"ansible-runner/internal/models"
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"

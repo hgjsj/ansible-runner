@@ -1,9 +1,9 @@
-package controllers
+package api
 
 import (
-	"ansible-runner/db"
-	"ansible-runner/services"
-	"ansible-runner/utils"
+	"ansible-runner/internal/db"
+	"ansible-runner/internal/services"
+	"ansible-runner/internal/utils"
 	"fmt"
 	"net/http"
 	"time"
@@ -13,14 +13,14 @@ import (
 
 // JobResponse represents a job response
 type JobResponse struct {
-	ID     string 	`json:"id,omitempty"`
+	ID       string `json:"id,omitempty"`
 	Playbook string `json:"playbook,omitempty"`
-	Status string	`json:"status,omitempty"`
-	Step   string   `json:"step,omitempty"`
-	Output string   `json:"stdout,omitempty"`
-	Err    string   `json:"stderr,omitempty"`
-	StartAt string `json:"start_at,omitempty"`
-	EndAt string `json:"end_at,omitempty"`
+	Status   string `json:"status,omitempty"`
+	Step     string `json:"step,omitempty"`
+	Output   string `json:"stdout,omitempty"`
+	Err      string `json:"stderr,omitempty"`
+	StartAt  string `json:"start_at,omitempty"`
+	EndAt    string `json:"end_at,omitempty"`
 }
 
 // GetJob handles the retrieval of a job.
@@ -33,7 +33,7 @@ func GetJob(c *gin.Context) {
 		return
 	}
 	utils.Log.Info(fmt.Sprintf("Get job %s and response", job.ID))
-	var responseJob = JobResponse{ID: job.ID.Hex(), Playbook: job.Playbook, Status: job.Status, 
+	var responseJob = JobResponse{ID: job.ID.Hex(), Playbook: job.Playbook, Status: job.Status,
 		Step: job.Step, Output: job.Output, Err: job.Error, StartAt: job.StartTime.Format(time.RFC3339)}
 	if job.EndTime.IsZero() == false {
 		responseJob.EndAt = job.EndTime.Format(time.RFC3339)
@@ -41,7 +41,6 @@ func GetJob(c *gin.Context) {
 	c.JSON(http.StatusOK, responseJob)
 	gin.Logger()
 }
-
 
 // ListJobs handles the request to list jobs by job name.
 func ListJobs(c *gin.Context) {

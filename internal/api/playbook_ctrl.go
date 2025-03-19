@@ -1,10 +1,10 @@
-package controllers
+package api
 
 import (
-	"ansible-runner/models"
-	"ansible-runner/services"
-	"ansible-runner/tasks"
-	"ansible-runner/utils"
+	"ansible-runner/internal/models"
+	"ansible-runner/internal/services"
+	"ansible-runner/internal/tasks"
+	"ansible-runner/internal/utils"
 	"fmt"
 	"net/http"
 	"slices"

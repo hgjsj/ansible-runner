@@ -1,8 +1,8 @@
 package tasks
 
 import (
-	"ansible-runner/services"
-	"ansible-runner/utils"
+	"ansible-runner/internal/services"
+	"ansible-runner/internal/utils"
 	"context"
 	"encoding/json"
 	"fmt"

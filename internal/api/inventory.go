@@ -1,10 +1,10 @@
-package controllers
+package api
 
 import (
-	"ansible-runner/db"
-	"ansible-runner/models"
-	"ansible-runner/services"
-	"ansible-runner/utils"
+	"ansible-runner/internal/db"
+	"ansible-runner/internal/models"
+	"ansible-runner/internal/services"
+	"ansible-runner/internal/utils"
 	"fmt"
 	"net/http"
 
@@ -35,7 +35,7 @@ func GetInventory(c *gin.Context) {
 }
 
 func CreateInventory(c *gin.Context) {
-	requestBody := models.NewInventory(false) 
+	requestBody := models.NewInventory(false)
 	if err := c.ShouldBindJSON(requestBody); err != nil {
 		utils.Log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{

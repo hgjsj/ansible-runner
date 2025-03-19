@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ansible-runner/cmd"
+	"ansible-runner/internal/cmd"
 )
 
 func main() {

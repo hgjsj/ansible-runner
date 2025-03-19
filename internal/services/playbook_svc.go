@@ -1,9 +1,9 @@
 package services
 
 import (
-	"ansible-runner/db"
-	"ansible-runner/models"
-	"ansible-runner/utils"
+	"ansible-runner/internal/db"
+	"ansible-runner/internal/models"
+	"ansible-runner/internal/utils"
 	"fmt"
 	"os"
 	"path/filepath"

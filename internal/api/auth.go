@@ -1,7 +1,7 @@
-package controllers
+package api
 
 import (
-	"ansible-runner/utils"
+	"ansible-runner/internal/utils"
 	"fmt"
 	"net/http"
 	"strings"
@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Auth(server string, port int, user string, pwd string, baseDN string, group string)  error {
+func Auth(server string, port int, user string, pwd string, baseDN string, group string) error {
 	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", server, port))
 	if err != nil {
 		utils.Log.Error(fmt.Sprintf("LDAP connection failed: %v", err))
@@ -29,8 +29,8 @@ func Auth(server string, port int, user string, pwd string, baseDN string, group
 
 	// user is start with sec\\
 	if strings.HasPrefix(strings.ToLower(user), "sec\\") {
-		user = user[strings.Index(user, "\\") + 1 :]
-	} else if (strings.Contains(user, "@")) {
+		user = user[strings.Index(user, "\\")+1:]
+	} else if strings.Contains(user, "@") {
 		user = user[:strings.Index(user, "@")]
 	}
 
@@ -52,8 +52,6 @@ func Auth(server string, port int, user string, pwd string, baseDN string, group
 	}
 	return fmt.Errorf("user %s is not member of group %s", user, group)
 }
-
-
 
 // AuthMiddleware is a simple authentication middleware example.
 func AuthMiddleware(c *gin.Context) {
@@ -89,13 +87,12 @@ func AuthMiddleware(c *gin.Context) {
 	baseDN := viper.GetString("ldap.baseDN")
 	requiredGroup := viper.GetString("ldap.requiredGroup")
 
-
 	err = Auth(ldapServer, ldapPort, username, password, baseDN, requiredGroup)
 	if err != nil {
 
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
-	} 
+	}
 
 	// Continue to the next handler if authenticated
 	c.Next()
