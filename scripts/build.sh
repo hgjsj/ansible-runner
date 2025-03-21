@@ -2,9 +2,6 @@
 
 cd /opt/ansible-runner
 
-# pull latest code the project
-echo Pull latest code from github
-git pull origin main 
 
 # Build the project
 echo Building the project
