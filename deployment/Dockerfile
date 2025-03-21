@@ -16,5 +16,5 @@ COPY cert /opt/ansible-runner/cert
 COPY configs /opt/ansible-runner/configs
 WORKDIR /opt/ansible-runner
 EXPOSE 8080
-ENTRYPOINT ["/opt/ansible-runner/gansible-runner"]
+ENTRYPOINT ["/opt/ansible-runner/ansible-runner"]
 CMD ["server"]
