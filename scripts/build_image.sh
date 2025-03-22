@@ -7,7 +7,7 @@ export no_proxy=127.0.0.1,localhost,.env01.mcloud.entsvcs.net
 cd /opt/ansible-runner
 
 mkdir build_context
-cp -r /opt/ansible-runner build_context/
+cp -r /opt/ansible-sid-operator build_context/
 
 # Build the project
 docker build -t ansible-runner:$1 -f deployment/Dockerfile .

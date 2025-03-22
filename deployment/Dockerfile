@@ -18,7 +18,7 @@ RUN mkdir -p /opt/ansible-runner
 COPY --from=builder /opt/ansible-runner/ansible-runner /opt/ansible-runner
 COPY cert /opt/ansible-runner/cert
 COPY configs /opt/ansible-runner/configs
-COPY /opt/ansible-sid-operator /opt/ansible-sid-operator
+COPY build_context/ansible-sid-operator /opt/ansible-sid-operator
 WORKDIR /opt/ansible-runner
 EXPOSE 8080
 ENTRYPOINT ["/opt/ansible-runner/ansible-runner"]
