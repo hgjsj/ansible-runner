@@ -16,8 +16,7 @@ FROM alpine/ansible:2.17.0
 RUN mkdir -p /opt/ansible-runner
 
 COPY --from=builder /opt/ansible-runner/ansible-runner /opt/ansible-runner
-COPY cert /opt/ansible-runner/cert
-COPY configs /opt/ansible-runner/configs
+COPY build_context/runner /opt/ansible-runner/
 COPY build_context/ansible-sid-operator /opt/ansible-sid-operator
 WORKDIR /opt/ansible-runner
 EXPOSE 8080
