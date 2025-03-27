@@ -16,6 +16,6 @@ func LoadConfig(p string) {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		Log.Error(err.Error())
+		panic(err.Error())
 	}
 }

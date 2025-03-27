@@ -9,7 +9,7 @@ import (
 
 func init() {
 	utils.LoadConfig("../../configs/config")
-	utils.InitLogger("../../logs/test.log")
+	utils.InitLogger()
 }
 
 var job_id string

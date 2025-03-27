@@ -8,7 +8,7 @@ import (
 
 func init() {
 	utils.LoadConfig("../../configs/config")
-	utils.InitLogger("../../logs/test.log")
+	utils.InitLogger()
 }
 
 func TestAuth(t *testing.T) {

@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"log/slog"
 	"os"
 	"runtime"
-	"log/slog"
+
+	"github.com/spf13/viper"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -15,18 +17,25 @@ var Log Logger
 var lumberjackLogger *lumberjack.Logger
 
 // InitLogger initialize a log instance
-func InitLogger(name string) {
+func InitLogger() {
+	logFile := viper.GetString("log.file")
 
-	// Configure lumberjack for log rotation
-	lumberjackLogger = new(lumberjack.Logger)
+	if logFile != "" {
+		// Configure lumberjack for log rotation
+		lumberjackLogger = new(lumberjack.Logger)
 
-	lumberjackLogger.Filename = name
-	lumberjackLogger.MaxSize = 10   // megabytes
-	lumberjackLogger.MaxBackups = 3 // number of old log files to retain
-
-    // Create a new slog logger with lumberjack as the output
-    handler := slog.NewJSONHandler(lumberjackLogger, nil)
-    Log.Logger = slog.New(handler)
+		lumberjackLogger.Filename = logFile
+		lumberjackLogger.MaxSize = 10   // megabytes
+		lumberjackLogger.MaxBackups = 3 // number of old log files to retain
+		handler := slog.NewJSONHandler(lumberjackLogger, nil) // Create a new slog logger with lumberjack as the output
+		Log.Logger = slog.New(handler)
+	} else {
+		// Default to stdout
+		Log.Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	}
+    
+    
+    
 	Log.Logger = Log.Logger.With("pid", os.Getpid())
 }
 
