@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ansible-runner-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ansible-runner-worker
+  template:
+    metadata:
+      labels:
+        app: ansible-runner-worker
+    spec:
+      containers:
+        - name: worker
+          image: ansible-runner:latest # Replace with the actual image tag
+          imagePullPolicy: IfNotPresent
+          command: ["./ansible-runner", "worker"]
+          envFrom:
+            - configMapRef:
+                name: configfile
+          volumeMounts:
+            - name: cert-volume
+              mountPath: /opt/ansible-runner/cert
+            - name: config-volume
+              mountPath: /opt/ansible-runner
+            - name: job-volume
+              mountPath: /var/vault/key_pairs
+      volumes:
+        - name: cert-volume
+          secret:
+            secretName: ansible-runner-secrets
+            items:
+              - key: server.crt
+                path: server.crt
+              - key: server.key
+                path: server.key
+        - name: config-volume
+          configMap:
+            name: configfile
+        - name: job-volume
+          persistentVolumeClaim:
+            claimName: job-pvc

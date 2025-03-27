@@ -14,7 +14,7 @@ cp -r /opt/ansible-runner/configs build_context/runner/
 # Build the project
 docker build -t ansible-runner:$1 -f deployment/Dockerfile .
 
-if $2="push"; then
+if [ "$2" = "push" ]; then
     # Push the image to artifactory
     docker login -u fsun4 artifactory.platformdxc-mg.com/vpcp4s-docker
 

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configfile
+data:
+  config.yaml: |
+    log:
+      file: ""
+    mongodb:
+      uri: "mongodb://pln-n1-p4sauto3.env01.mcloud.entsvcs.net:27017" 
+    redis:
+      uri: "redis://pln-n1-p4sauto3.env01.mcloud.entsvcs.net:6379"
