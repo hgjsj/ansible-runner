@@ -26,7 +26,7 @@ mongodb:
   inventoryCollection: "ansibleinventory"
 legacy_db: PDC03-N1
 redis:
-  uri: "redis://localhost:6379"
+  uri: "localhost:6379"
   password: 017c0141e4e1e7071b6a7513d0
 ldap:
   server: "dcatlsecgc01.sec.entsvcs.com"

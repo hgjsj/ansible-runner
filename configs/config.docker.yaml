@@ -1,0 +1,35 @@
+log:
+  file: ""
+server:
+  port: 8080
+playbook:
+  baseDir: "/opt/ansible-sid-operator"
+ansible:
+  baseDir: "/usr/bin"
+  playbook: "ansible-playbook"
+  vault: "ansible-vault"
+  command: "ansible"
+  options:
+    - "-b"
+    - "--become-user=root"
+    - "--become-method=sudo"
+    - "--user=p4sautomation"
+    - "--vault-password-file=vault-secret"
+job:
+  baseDir: "/var/vault/key_pairs"
+mongodb:
+  uri: "mongodb://204.104.249.27:27017"
+  user: ansiblerunner
+  password: 017c0141e4e1e7071b6a7513d0
+  database: "ansiblerunner"
+  jobCollection: "ansiblejob"
+  inventoryCollection: "ansibleinventory"
+legacy_db: PDC03-N1
+redis:
+  uri: "204.104.249.27:6379"
+  password: 017c0141e4e1e7071b6a7513d0
+ldap:
+  server: "dcatlsecgc01.sec.entsvcs.com"
+  port: 389
+  baseDN: "OU=Employees,OU=Accounts,DC=sec,DC=entsvcs,DC=com"
+  requiredGroup: "CN=TEAM_INT_PE-ESO4SAP"

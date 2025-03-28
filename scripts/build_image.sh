@@ -9,7 +9,8 @@ cd /opt/ansible-runner
 mkdir -p build_context/runner
 cp -r /opt/ansible-sid-operator build_context/
 cp -r /opt/ansible-runner/cert build_context/runner/
-cp -r /opt/ansible-runner/configs build_context/runner/
+mkdir -p build_context/runner/configs
+cp -r /opt/ansible-runner/configs/config.docker.yaml build_context/runner/configs/config.yaml
 
 # Build the project
 docker build -t ansible-runner:$1 -f deployment/Dockerfile .
