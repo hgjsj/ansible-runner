@@ -13,8 +13,7 @@ RUN go build -o ansible-runner
 
 
 FROM willhallonline/ansible:2.9.27-alpine-3.17
-RUN pip install --proxy=http://proxy-nasa.svcs.entsvcs.com:8080 requests &&\
-    pip install --proxy=http://proxy-nasa.svcs.entsvcs.com:8080 pywinrm[credssp,kerberos]
+RUN pip install --proxy=http://proxy-nasa.svcs.entsvcs.com:8080 pywinrm[credssp]==0.2.2
 RUN mkdir -p /opt/ansible-runner
 
 COPY --from=builder /opt/ansible-runner/ansible-runner /opt/ansible-runner
