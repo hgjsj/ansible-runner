@@ -12,7 +12,7 @@ COPY internal  ./internal
 RUN go build -o ansible-runner 
 
 
-FROM alpine/ansible:2.17.0
+FROM willhallonline/ansible:2.9.27-alpine-3.17
 RUN pip install --proxy=http://proxy-nasa.svcs.entsvcs.com:8080 -t /usr/lib/python3.12/site-packages requests
 RUN mkdir -p /opt/ansible-runner
 
