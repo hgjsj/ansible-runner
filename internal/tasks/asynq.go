@@ -24,7 +24,7 @@ func newAsyncServer() *asynq.Server {
 	if asynqServer != nil {
 		return asynqServer
 	}
-	redisAddr := viper.GetString("redis.addr")
+	redisAddr := viper.GetString("redis.uri")
 	password, err := utils.Decrypt(viper.GetString("redis.password"))
 	if err != nil {
 		utils.Log.Error(err.Error())

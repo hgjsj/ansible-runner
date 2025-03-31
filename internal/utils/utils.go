@@ -18,7 +18,9 @@ func RunCommand(cwd string, cmd string, args ...string) (string, error) {
 	Log.Info(fmt.Sprintf("Running command: %s", command.String()))
 	output, err := command.Output()
 	if err != nil {
+		Log.Info(fmt.Sprintf("Command output: %s", string(output)))
 		Log.Error(err.Error())
+		
 		return "", err
 	}
 	return string(output), nil
