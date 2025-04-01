@@ -25,6 +25,7 @@ func newAsynqClient() *asynq.Client {
 	return asynqClient
 }
 
+// EnqueueJobTask represents a job task.
 func EnqueueJobTask(jobid string, inventoryid string) (string, error) {
 	jobTask := JobTask{InventoryID: inventoryid, ID: jobid}
 	b, err := json.Marshal(jobTask)
@@ -40,6 +41,7 @@ func EnqueueJobTask(jobid string, inventoryid string) (string, error) {
 	return jobTask.ID, nil
 }
 
+// CloseClient closes the asynq client.
 func CloseClient() {
 	if asynqClient != nil {
 		asynqClient.Close()

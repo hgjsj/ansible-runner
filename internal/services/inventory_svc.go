@@ -10,17 +10,19 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// GetInventory retrieves an inventory by its ID.
 func GetInventory(id string) (*models.Inventory, error) {
 	i, err := db.Retrieve[models.Inventory](db.NewMongoClient(), db.NewMongoClient().InventoryCollection, id)
 	if err != nil {
 		return nil, fmt.Errorf("inventory %s not found", id)
-	} else {
-		return i, nil
-	}
+	} 
+	return i, nil
+	
 }
 
+// ListInventory retrieves all inventories.
 func ListInventory(collection string) ([]models.Inventory, error) {
-	res, err := db.ListDocuments[models.Inventory](db.NewMongoClient(), collection, bson.D{{"_id", 1}, {"name", 1}})
+	res, err := db.ListDocuments[models.Inventory](db.NewMongoClient(), collection, bson.D{{Key: "_id", Value: 1}, {Key: "name", Value: 1}})
 	if err != nil {
 		if err == mongo.ErrEmptySlice{
 			return make([]models.Inventory, 0), nil
@@ -30,6 +32,7 @@ func ListInventory(collection string) ([]models.Inventory, error) {
 	return res, nil
 }
 
+// CreateInventory creates a new inventory.
 func CreateInventory(i *models.Inventory) (string, error) {
 	err := db.NewMongoClient().Persist(db.NewMongoClient().InventoryCollection, i.ID.Hex(), i)
 	if err != nil {
@@ -40,12 +43,12 @@ func CreateInventory(i *models.Inventory) (string, error) {
 	return i.ID.Hex(), nil
 }
 
+// DeleteInventory deletes an inventory by its ID.
 func DeleteInventory(id string) error {
 	if id == "all" {
 		//delete all inventories
 		return db.DeleteDocument(db.NewMongoClient(), db.NewMongoClient().InventoryCollection, "")
-	} else {
-		//delete inventory by id
-		return db.DeleteDocument(db.NewMongoClient(), db.NewMongoClient().InventoryCollection, id)
-	}
+	} 
+	//delete inventory by id
+	return db.DeleteDocument(db.NewMongoClient(), db.NewMongoClient().InventoryCollection, id)
 }	

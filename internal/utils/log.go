@@ -9,10 +9,12 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+// Logger represents a logger configuration.
 type Logger struct {
 	*slog.Logger
 }
 
+// Log is Singleton instance of the Logger
 var Log Logger
 var lumberjackLogger *lumberjack.Logger
 
@@ -39,17 +41,20 @@ func InitLogger() {
 	Log.Logger = Log.Logger.With("pid", os.Getpid())
 }
 
+// Info logs an info message
 func (l Logger) Error(msg string, args ...any){
 	pc, file, line, ok := runtime.Caller(1)
 	if ok {
 		funcName := runtime.FuncForPC(pc).Name()
-		l.Logger.Error(msg, "file", file, "line", line, "caller", funcName, args)
+		args = append(args, "file", file, "line", line, "caller", funcName)
+		l.Logger.Error(msg, args...)
 	} else {
-		l.Logger.Error(msg, args)
+		l.Logger.Error(msg, args...)
 	}
 	
 }
 
+// CleanUp closes the logger
 func CleanUp() {
 	if lumberjackLogger != nil {
 		lumberjackLogger.Close()
