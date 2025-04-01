@@ -3,8 +3,8 @@ package services
 import (
 	"ansible-runner/internal/db"
 	"ansible-runner/internal/models"
-	"fmt"
 
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -35,3 +35,14 @@ func ListJobs(collection string) ([]models.AnsibleJob, error) {
 	}
 	return res, nil
 }
+
+func DeleteJob(id string) error {
+	if id == "all" {
+		//delete all jobs
+		return db.DeleteDocument(db.NewMongoClient(), db.NewMongoClient().JobCollection, "")
+	} else {
+		//delete job by id
+		return db.DeleteDocument(db.NewMongoClient(), db.NewMongoClient().JobCollection, id)
+	}
+}	
+

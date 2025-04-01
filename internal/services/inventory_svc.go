@@ -39,3 +39,13 @@ func CreateInventory(i *models.Inventory) (string, error) {
 
 	return i.ID.Hex(), nil
 }
+
+func DeleteInventory(id string) error {
+	if id == "all" {
+		//delete all inventories
+		return db.DeleteDocument(db.NewMongoClient(), db.NewMongoClient().InventoryCollection, "")
+	} else {
+		//delete inventory by id
+		return db.DeleteDocument(db.NewMongoClient(), db.NewMongoClient().InventoryCollection, id)
+	}
+}	

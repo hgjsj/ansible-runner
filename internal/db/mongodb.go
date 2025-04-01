@@ -178,6 +178,28 @@ func ListDocuments[T any](m *MongoDB, collection string, projection bson.D) ([]T
 	return results, nil
 }
 
+// DeleteDocument deletes a document from a collection.
+func DeleteDocument(m *MongoDB, collection string, keyFilter string) error {
+	filter := bson.M{}
+	if keyFilter != "" {
+
+		objID, err := primitive.ObjectIDFromHex(keyFilter)
+
+		if err != nil {
+			utils.Log.Error(err.Error())
+			return err
+		}
+		filter = bson.M{"_id": objID}
+	} 
+
+	_, err := m.mongoClient.Database(m.db).Collection(collection).DeleteMany(m.c, filter)
+	if err != nil {
+		utils.Log.Error(err.Error())
+		return err
+	}
+	return nil
+}
+
 // Close closes the MongoDB connection.
 func (m *MongoDB) Close() {
 	if m != nil && m.mongoClient != nil {

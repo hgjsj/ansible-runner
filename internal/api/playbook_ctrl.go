@@ -47,6 +47,14 @@ func LaunchPlaybook(c *gin.Context) {
 		return
 	}
 
+	// Check Inventory is exists
+	_, err := services.GetInventory(requestBody.Inventory)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("Inventory %s is not exists with error %s", requestBody.Inventory , err.Error()),
+		})
+	}
+	
 	// save ansible job to db
 	aj := models.NewAnsibleJob(true)
 	aj.Playbook = requestBody.Playbook
@@ -57,10 +65,9 @@ func LaunchPlaybook(c *gin.Context) {
 		})
 		return
 	}
-
 	// Send message to queue
 	utils.Log.Info("Get payload from request is ok")
-	_, err := tasks.EnqueueJobTask(aj.ID.Hex(), requestBody.Inventory)
+	_, err = tasks.EnqueueJobTask(aj.ID.Hex(), requestBody.Inventory)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -70,5 +77,5 @@ func LaunchPlaybook(c *gin.Context) {
 
 	utils.Log.Info("Run playbook is ok and response")
 	var responseJob = JobResponse{ID: aj.ID.Hex(), Status: aj.Status}
-	c.JSON(http.StatusOK, responseJob)
+	c.JSON(http.StatusCreated, responseJob)
 }

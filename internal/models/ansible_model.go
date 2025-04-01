@@ -38,6 +38,7 @@ type AnsibleJob struct {
 	Step      string             `json:"step,omitempty"`
 	StartTime time.Time          `json:"start_time,omitempty"`
 	EndTime   time.Time          `json:"end_time,omitempty"`
+	InventoryID primitive.ObjectID `bson:"inventory_id,omitempty" json:"inventory_id,omitempty"`
 }
 
 // enum for job status
@@ -152,15 +153,30 @@ func NewAnsibleJob(initialID bool) *AnsibleJob {
 	return j
 }
 
+func (j *AnsibleJob) Reset() {
+	j.Status = Scheduled
+	j.Output = ""
+	j.Error = ""
+	j.StartTime = time.Time{}
+	j.EndTime = time.Time{}
+	j.Step = ""
+	j.InventoryID = primitive.NilObjectID
+}
+
 // NewInventory creates a new Ansible inventory.
 func NewInventory(localhost bool) *Inventory {
 	i := new(Inventory)
 	i.ID = primitive.NewObjectID()
 	if localhost {
-		h := new(Host)
-		h.Name = "localhost"
-		h.Vars = map[string]string{"ansible_connection": "local"}
-		i.Localhost = h
+		i.AddLocalhost()
 	}
 	return i
+}
+
+func (i *Inventory) AddLocalhost() {
+	h := new(Host)
+	h.Name = "localhost"
+	h.Vars = map[string]string{"ansible_connection": "local"}
+	i.Localhost = h
+	i.Groups = append(i.Groups, Group{Name: h.Name, Hosts: []Host{*h}})
 }

@@ -108,21 +108,21 @@ func RunPlaybook(j string, i string) (*models.AnsibleJob, error) {
 	if err != nil{
 		return nil, err
 	} 
+	utils.Log.Info(fmt.Sprintf("Get job name %s from mongodb", job.ID))
     job.StartTime = time.Now()
-
-	utils.Log.Info("retrieve job done")
-	var inventory = models.NewInventory(true)
 
 	inv, err := db.Retrieve[models.Inventory](db.NewMongoClient(),db.NewMongoClient().InventoryCollection, i)
 	
 	if err != nil {
 		return nil, err
 	}
+	
 	utils.Log.Info(fmt.Sprintf("Get inventory name %s from mongodb", inv.Name))
 
-	inventory.Groups = inv.Groups
+	job.InventoryID = inv.ID
+	inv.AddLocalhost()
 
-	utils.Log.Info(fmt.Sprintf("Add localhost %s to inventory", inventory.Localhost.Name))
+	utils.Log.Info(fmt.Sprintf("Add localhost %s to inventory", inv.Localhost.Name))
 
 	var b = viper.GetString("job.baseDir")	
 	if err := os.MkdirAll(filepath.Join(b, job.ID.Hex()), os.ModePerm); err != nil {
@@ -131,7 +131,7 @@ func RunPlaybook(j string, i string) (*models.AnsibleJob, error) {
 	}
 
 	 var inventoryFile = filepath.Join(b, job.ID.Hex(), "hosts.yml")
-	if err := inventory.ToYaml(inventoryFile); err != nil {
+	if err := inv.ToYaml(inventoryFile); err != nil {
 		return nil, err
 	}
 

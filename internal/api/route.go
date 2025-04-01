@@ -14,8 +14,11 @@ func SetRoutes() http.Handler {
 	r.POST("/playbook/launch", LaunchPlaybook)
 	r.GET("/job/:id", GetJob)
 	r.GET("/job", ListJobs)
+	r.DELETE("/job/:id", DeleteJob)
+	r.POST("/job/:id/relaunch", RelaunchJob)
 	r.GET("/inventory", ListInventory)
 	r.GET("/inventory/:id", GetInventory)
+	r.DELETE("/inventory/:id", DeleteInventory)
 	r.POST("/inventory", CreateInventory)
 	return r
 }

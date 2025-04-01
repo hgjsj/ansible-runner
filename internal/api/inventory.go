@@ -51,5 +51,16 @@ func CreateInventory(c *gin.Context) {
 		return
 	}
 	utils.Log.Info("Create inventory is ok and response")
-	c.JSON(http.StatusOK, requestBody)
+	c.JSON(http.StatusCreated, requestBody)
+}
+
+func DeleteInventory(c *gin.Context) {
+	id := c.Param("id")
+	err := services.DeleteInventory(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	utils.Log.Info(fmt.Sprintf("Delete job %s and response", id))
+	c.JSON(http.StatusOK, gin.H{"status": "Deleted"})
 }
