@@ -178,5 +178,4 @@ func (i *Inventory) AddLocalhost() {
 	h.Name = "localhost"
 	h.Vars = map[string]string{"ansible_connection": "local"}
 	i.Localhost = h
-	i.Groups = append(i.Groups, Group{Name: h.Name, Hosts: []Host{*h}})
 }
