@@ -4,7 +4,7 @@ metadata:
   name: ansible-runner-service
 spec:
   selector:
-    app: ansible-runner
+    app: ansible-runner-server
   ports:
     - protocol: TCP
       port: 8443
