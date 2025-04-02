@@ -5,16 +5,5 @@ resources:
   - deployment_server.yaml
   - deployment_worker.yaml
   - service.yaml
-  - secret.yaml
-  - pvc.yaml
-configMapGenerator:
-  - name: configfile
-    files:
-      - config.yaml=../../configs/config.yaml
-secretGenerator:
-  - name: ansible-runner-secrets
-    files:
-      - server.crt=../../cert/server.crt
-      - server.key=../../cert/server.key
 commonLabels:
   app: ansible-runner
