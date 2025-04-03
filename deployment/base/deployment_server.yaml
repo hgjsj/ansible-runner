@@ -20,3 +20,17 @@ spec:
           args: ["server"]
           ports:
             - containerPort: 8080
+          volumeMounts:
+            - name: config-volume
+              mountPath: /opt/ansible-runner/configs
+              readOnly: true
+            - name: cert-volume
+              mountPath: /opt/ansible-runner/cert
+              readOnly: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: configfile
+        - name: cert-volume
+          secret:
+            secretName: server-cert

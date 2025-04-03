@@ -18,6 +18,8 @@ if [ "$2" = "push" ]; then
 
     docker push artifactory.platformdxc-mg.com/vpcp4s-docker/ansible-runner:$1
 
+    docker rmi artifactory.platformdxc-mg.com/vpcp4s-docker/ansible-runner:$1
+
     docker logout artifactory.platformdxc-mg.com/vpcp4s-docker
 fi
 

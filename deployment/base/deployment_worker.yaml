@@ -18,3 +18,10 @@ spec:
           imagePullPolicy: IfNotPresent
           command: ["./ansible-runner"]
           args: ["worker"]
+          volumeMounts:
+            - name: config-volume
+              mountPath: /opt/ansible-runner/configs
+      volumes:
+        - name: config-volume
+          configMap:
+            name: configfile

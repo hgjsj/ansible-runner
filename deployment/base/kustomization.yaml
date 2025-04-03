@@ -5,3 +5,13 @@ resources:
   - deployment_server.yaml
   - deployment_worker.yaml
   - service.yaml
+
+configmapGenerator:
+  - name: configfile
+    files:
+      - config.yaml
+secretGenerator:
+  - name: server-cert
+    files:
+      - cert/server.crt
+      - cert/server.key
