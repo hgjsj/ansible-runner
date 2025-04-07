@@ -46,7 +46,8 @@ func server() {
 
 	go func() {
 		if err := srv.ListenAndServeTLS("./cert/server.crt", "./cert/server.key"); err != nil && err != http.ErrServerClosed {
-			fmt.Printf("listen: %s\n", err)
+			utils.Log.Error(err.Error())
+			panic(err)
 		}
 	}()
 }

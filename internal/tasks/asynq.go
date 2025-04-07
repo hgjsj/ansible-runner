@@ -6,15 +6,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/hibiken/asynq"
 	"github.com/spf13/viper"
 )
-
-// type AsynqServer struct {
-// 	s *asynq.Server
-// 	m *asynq.ServeMux
-// }
 
 var asynqServer *asynq.Server
 var mux *asynq.ServeMux 
@@ -30,18 +26,19 @@ func newAsyncServer() *asynq.Server {
 		utils.Log.Error(err.Error())
 		return nil
 	}
-	asynqServer = asynq.NewServer(asynq.RedisClientOpt{Addr: redisAddr, Password: password}, asynq.Config{Concurrency: 5})
+	asynqServer = asynq.NewServer(asynq.RedisClientOpt{Addr: redisAddr, Password: password}, 
+		asynq.Config{Concurrency: 5, ShutdownTimeout: 10 * time.Second})
 	mux = asynq.NewServeMux()
 	return asynqServer
 }
 
+// JobTask represents a job task.
 type JobTask struct {
 	ID          string           `json:"id,omitempty"`
 	InventoryID string           `json:"inventoryid,omitempty"`
 }
 
-
-
+// HandleAnsibleJobTask is a handler for the job task.
 func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 	var p JobTask
 	utils.Log.Info("Unmarsh job task start")
@@ -57,7 +54,7 @@ func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 	return nil
 }
 
-
+// LaunchServer starts the asynq server and handles the job task.
 func LaunchServer() error {
 	if newAsyncServer() == nil  {
 		utils.Log.Error("can not create asynq server")
