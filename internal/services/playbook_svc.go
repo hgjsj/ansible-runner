@@ -13,7 +13,7 @@ import (
 )
 
 var outputPluginMap = map[string][]string{
-	models.TINYJSON: {"ANSIBLE_CALLBACK_WHITELIST=tinyjson","ANSIBLE_STDOUT_CALLBACK=tiny_json"},
+	models.TINYJSON: {"ANSIBLE_CALLBACK_WHITELIST=tiny_json","ANSIBLE_STDOUT_CALLBACK=tiny_json"},
 	models.JSON:    {"ANSIBLE_CALLBACK_WHITELIST=json","ANSIBLE_STDOUT_CALLBACK=json"},
 }
 
@@ -51,7 +51,7 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 					job.Error = e.Error()
 				} else {
 					job.Status = models.Prepared
-					job.Output = o
+					utils.Log.Info(fmt.Sprintf("Pre-job run is ok and output %s", o))
 				}
 				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
 				
