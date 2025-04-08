@@ -11,9 +11,13 @@ import (
 )
 
 // RunCommand executes a command in the specified directory.
-func RunCommand(cwd string, cmd string, args ...string) (string, error) {
+func RunCommand(cwd string, env []string, cmd string, args ...string) (string, error) {
 	command := exec.Command(cmd, args...)
+	Log.Info(fmt.Sprintf("Command directory: %s", cwd))
 	command.Dir = cwd
+
+	Log.Info(fmt.Sprintf("Command Env: %s", strings.Join(env, ",")))
+	command.Env = append(command.Env, env...)
 
 	Log.Info(fmt.Sprintf("Running command: %s", command.String()))
 	output, err := command.Output()

@@ -26,8 +26,8 @@ func newAsynqClient() *asynq.Client {
 }
 
 // EnqueueJobTask represents a job task.
-func EnqueueJobTask(jobid string, inventoryid string) (string, error) {
-	jobTask := JobTask{InventoryID: inventoryid, ID: jobid}
+func EnqueueJobTask(jobid string, inventoryid string, outputplugin string) (string, error) {
+	jobTask := JobTask{InventoryID: inventoryid, ID: jobid, OutputPlugin: outputplugin}
 	b, err := json.Marshal(jobTask)
 	if err != nil {
 		utils.Log.Error(err.Error())

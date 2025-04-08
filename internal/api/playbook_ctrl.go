@@ -16,6 +16,7 @@ import (
 type LaunchRequest struct {
 	Playbook  string `json:"playbook"`
 	Inventory string `json:"inventory"`
+	OutputPlugin string `json:"OutputPlugin,omitempty"`
 }
 
 var playbookList []string = []string{"p4s_account_validate.yml"}
@@ -35,6 +36,14 @@ func LaunchPlaybook(c *gin.Context) {
 		utils.Log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid request body",
+		})
+		return
+	}
+
+	// Check if the OutputPlugin is valid.
+	if len(requestBody.OutputPlugin) > 0 &&  requestBody.OutputPlugin != models.JSON && requestBody.OutputPlugin != models.TINYJSON  {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("Output plugin %s is not supported", requestBody.OutputPlugin),
 		})
 		return
 	}
@@ -67,7 +76,7 @@ func LaunchPlaybook(c *gin.Context) {
 	}
 	// Send message to queue
 	utils.Log.Info("Get payload from request is ok")
-	_, err = tasks.EnqueueJobTask(aj.ID.Hex(), requestBody.Inventory)
+	_, err = tasks.EnqueueJobTask(aj.ID.Hex(), requestBody.Inventory, requestBody.OutputPlugin)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),

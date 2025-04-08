@@ -37,7 +37,7 @@ func TestRunCommand(t *testing.T) {
 	cmd := "echo"
 	args := []string{"hello world"}
 
-	output, err := RunCommand(cwd, cmd, args...)
+	output, err := RunCommand(cwd, nil, cmd, args...)
 	if err != nil {
 		t.Fatalf("RunCommand failed with error: %s", err)
 	}
@@ -47,7 +47,7 @@ func TestRunCommand(t *testing.T) {
 	}
 	t.Logf("RunCommand output: %s", output)
 
-	output, err = RunCommand(cwd, "ls", "-l")
+	output, err = RunCommand(cwd, nil, "ls", "-l")
 	if err != nil {
 		t.Fatalf("RunCommand failed with error: %s", err)
 	} else {

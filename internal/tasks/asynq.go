@@ -36,6 +36,7 @@ func newAsyncServer() *asynq.Server {
 type JobTask struct {
 	ID          string           `json:"id,omitempty"`
 	InventoryID string           `json:"inventoryid,omitempty"`
+	OutputPlugin   string `json:"extra_vars,omitempty"`
 }
 
 // HandleAnsibleJobTask is a handler for the job task.
@@ -47,7 +48,7 @@ func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 		return err
 	}
 	utils.Log.Info("Unmarsh job task done")
-	_, err := services.RunPlaybook(p.ID, p.InventoryID)
+	_, err := services.RunPlaybook(p.ID, p.InventoryID, p.OutputPlugin)
 	if err != nil {
 		return err
 	}

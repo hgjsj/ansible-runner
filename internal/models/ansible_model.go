@@ -16,6 +16,7 @@ import (
 type Ansible struct {
 	Cmd  string
 	Args []string
+	Env  []string
 }
 
 // NewAnsible creates a new Ansible inventory.
@@ -39,6 +40,7 @@ type AnsibleJob struct {
 	StartTime time.Time          `json:"start_time,omitempty"`
 	EndTime   time.Time          `json:"end_time,omitempty"`
 	InventoryID primitive.ObjectID `bson:"inventory_id,omitempty" json:"inventory_id,omitempty"`
+	OutputPlugin string `json:"extra_vars,omitempty"`
 }
 
 // enum for job status
@@ -49,6 +51,12 @@ const (
 	Running   = "running"
 	Completed = "completed"
 	Failed    = "failed"
+)
+
+// enum for output plugin
+const(
+	TINYJSON = "tiny_json"
+	JSON = "json"
 )
 
 // AnsibleRunner is an interface for running Ansible playbooks.
@@ -143,7 +151,7 @@ func (i *Inventory) ToYaml(inventoryFile string) error {
 	return nil
 }
 
-// NewInventory creates a new Ansible inventory.
+// NewInventory creates a new Ansible job.
 func NewAnsibleJob(initialID bool) *AnsibleJob {
 	j := new(AnsibleJob)
 	if initialID {
@@ -161,6 +169,7 @@ func (j *AnsibleJob) Reset() {
 	j.EndTime = time.Time{}
 	j.Step = ""
 	j.InventoryID = primitive.NilObjectID
+	j.OutputPlugin = ""
 }
 
 // NewInventory creates a new Ansible inventory.
@@ -178,4 +187,21 @@ func (i *Inventory) AddLocalhost() {
 	h.Name = "localhost"
 	h.Vars = map[string]string{"ansible_connection": "local"}
 	i.Localhost = h
+}
+
+
+// Playbook represents a playbook configuration.
+type Playbook struct {
+	Name       string `json:"name"`
+	ProjectDir string `json:"project_dir"`
+}
+
+// Run executes the specified playbook.
+func (p *Playbook) Run(a *Ansible) (string, error) {
+	args := append(a.Args, p.Name)
+	output, err := utils.RunCommand(p.ProjectDir, a.Env, a.Cmd, args...)
+	if err != nil {
+		return "", err
+	}
+	return output, nil
 }

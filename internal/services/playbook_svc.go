@@ -12,21 +12,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Playbook represents a playbook configuration.
-type Playbook struct {
-	Name       string `json:"name"`
-	ProjectDir string `json:"project_dir"`
-	ExtraVars  []string
-}
-
-// Run executes the specified playbook.
-func (p *Playbook) Run(a *models.Ansible) (string, error) {
-	args := append(a.Args, p.Name)
-	output, err := utils.RunCommand(p.ProjectDir, a.Cmd, args...)
-	if err != nil {
-		return "", err
-	}
-	return output, nil
+var outputPluginMap = map[string][]string{
+	models.TINYJSON: {"ANSIBLE_CALLBACK_WHITELIST=tinyjson","ANSIBLE_STDOUT_CALLBACK=tiny_json"},
+	models.JSON:    {"ANSIBLE_CALLBACK_WHITELIST=json","ANSIBLE_STDOUT_CALLBACK=json"},
 }
 
 // GetPlaybooks returns a list of playbook file names with .yml extension from the specified base directory.
@@ -53,7 +41,7 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 		case  job := <- c:
 			utils.Log.Info(fmt.Sprintf("Status %s is arrived", job.Status))
 			if job.Status == models.Scheduled {
-				var preJob = Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
+				var preJob = models.Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
 				job.Status = models.Preparing
 				job.Step = "Pre-job"
 				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
@@ -69,12 +57,15 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 				
 				c <- job
 			} else if job.Status == models.Prepared {
-				var playbook = Playbook{Name: job.Playbook, ProjectDir: viper.GetString("playbook.baseDir")}
+				var playbook = models.Playbook{Name: job.Playbook, ProjectDir: viper.GetString("playbook.baseDir")}
 				job.Status = models.Running
 				job.Step = "Job"
 				job.Playbook = playbook.Name
 				var signedCert = filepath.Join(viper.GetString("job.baseDir"), job.ID.Hex(), "p4s_signed_cert")
 				ansible.Args = append(ansible.Args, fmt.Sprintf("--private-key=%s", signedCert))
+				if len(job.OutputPlugin) > 0 {
+				    ansible.Env = outputPluginMap[job.OutputPlugin]
+				}
 				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
 				o, e := playbook.Run(ansible)
 				if e != nil {
@@ -102,7 +93,7 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 }
 
 // RunPlaybook launches the specified playbook.
-func RunPlaybook(j string, i string) (*models.AnsibleJob, error) {
+func RunPlaybook(j string, i string, o string) (*models.AnsibleJob, error) {
 	utils.Log.Info(fmt.Sprintf("job id is %s and inventory id is %s", j, i))
 	job, err := db.Retrieve[models.AnsibleJob](db.NewMongoClient(),db.NewMongoClient().JobCollection, j)
 	if err != nil{
@@ -120,6 +111,7 @@ func RunPlaybook(j string, i string) (*models.AnsibleJob, error) {
 	utils.Log.Info(fmt.Sprintf("Get inventory name %s from mongodb", inv.Name))
 
 	job.InventoryID = inv.ID
+	job.OutputPlugin = o
 	inv.AddLocalhost()
 
 	utils.Log.Info(fmt.Sprintf("Add localhost %s to inventory", inv.Localhost.Name))
@@ -130,7 +122,7 @@ func RunPlaybook(j string, i string) (*models.AnsibleJob, error) {
 		return nil, err
 	}
 
-	 var inventoryFile = filepath.Join(b, job.ID.Hex(), "hosts.yml")
+	var inventoryFile = filepath.Join(b, job.ID.Hex(), "hosts.yml")
 	if err := inv.ToYaml(inventoryFile); err != nil {
 		return nil, err
 	}
