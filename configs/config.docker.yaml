@@ -18,7 +18,7 @@ ansible:
 job:
   baseDir: "/var/vault/key_pairs"
 mongodb:
-  uri: "mongodb://204.104.249.27:27017"
+  uri: "mongodb://ansiblerunner-mongodb-service.ansible-runner.svc.cluster.local:27017"
   user: ansiblerunner
   password: 017c0141e4e1e7071b6a7513d0
   database: "ansiblerunner"
@@ -26,7 +26,7 @@ mongodb:
   inventoryCollection: "ansibleinventory"
 legacy_db: PDC03-N1
 redis:
-  uri: "204.104.249.27:6379"
+  uri: "ansiblerunner-redis-service.ansible-runner.svc.cluster.local:6379"
   password: 017c0141e4e1e7071b6a7513d0
 ldap:
   server: "dcatlsecgc01.sec.entsvcs.com"

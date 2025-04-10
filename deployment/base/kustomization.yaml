@@ -1,11 +1,21 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
+namespace: ansible-runner
 resources:
+  # MongoDB Resources
+  - deployment_mongodb.yaml
+  - service_mongodb.yaml
+  - pvc_mongodb.yaml
+  - secret_mongodb.yaml
+  # Redis Resources
+  - deployment_redis.yaml
+  - service_redis.yaml # The file you provided
+  - pvc_redis.yaml
+  - secret_redis.yaml
+  # Ansible Runner Resources
   - deployment_server.yaml
   - deployment_worker.yaml
   - service.yaml
-
 configmapGenerator:
   - name: configfile
     files:

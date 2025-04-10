@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ansiblerunner-redis
+  namespace: ansible-runner
+  labels:
+    app: ansiblerunner-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ansiblerunner-redis
+  template:
+    metadata:
+      labels:
+        app: ansiblerunner-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7
+          imagePullPolicy: IfNotPresent
+          command: ["redis-server"]
+          args: ["--requirepass", "$(REDIS_PASSWORD)"]
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ansiblerunner-redis-secret
+                  key: redis-password
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: ansiblerunner-redis-pvc

@@ -1,18 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mongodb-deployment
+  name: ansiblerunner-mongodb
+  namespace: ansible-runner
   labels:
-    app: mongodb
+    app: ansiblerunner-mongodb
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mongodb
+      app: ansiblerunner-mongodb
   template:
     metadata:
       labels:
-        app: mongodb
+        app: ansiblerunner-mongodb
     spec:
       containers:
         - name: mongodb
@@ -37,4 +38,4 @@ spec:
       volumes:
         - name: mongodb-data
           persistentVolumeClaim:
-            claimName: mongodb-pvc
+            claimName: ansiblerunner-mongodb-pvc

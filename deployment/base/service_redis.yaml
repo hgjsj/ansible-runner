@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ansiblerunner-redis-service
+  namespace: ansible-runner
+spec:
+  ClusterIP: None
+  selector:
+    app: ansiblerunner-redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379

@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ansible-runner-service
+  namespace: ansible-runner
 spec:
   selector:
     app: ansible-runner-server
