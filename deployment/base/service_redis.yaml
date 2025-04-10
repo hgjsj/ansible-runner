@@ -4,7 +4,7 @@ metadata:
   name: ansiblerunner-redis-service
   namespace: ansible-runner
 spec:
-  ClusterIP: None
+  clusterIP: None
   selector:
     app: ansiblerunner-redis
   ports:

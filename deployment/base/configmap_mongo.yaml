@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ansiblerunner--configmap
+  namespace: ansible-runner
+data:
+  mongodb_init_db.js: |
+    db.createUser(
+      {
+        user: "ansiblerunner",
+        pwd: "p4sautomation",
+        roles: [
+          { role: "readWrite", db: "ansiblerunner" }
+        ]
+      }
+    );
