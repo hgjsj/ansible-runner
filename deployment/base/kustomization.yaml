@@ -31,3 +31,5 @@ secretGenerator:
     files:
       - cert/server.crt
       - cert/server.key
+generatorOptions:
+  disableNameSuffixHash: true

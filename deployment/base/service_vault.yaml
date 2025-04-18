@@ -6,7 +6,7 @@ metadata:
 spec:
   clusterIP: None
   selector:
-    app: ansiblerunner-redis
+    app: ansiblerunner-vault
   ports:
     - protocol: TCP
       port: 8200
