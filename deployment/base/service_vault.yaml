@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ansiblerunner-vault-service
+  namespace: ansible-runner
+spec:
+  clusterIP: None
+  selector:
+    app: ansiblerunner-redis
+  ports:
+    - protocol: TCP
+      port: 8200
+      targetPort: 8200

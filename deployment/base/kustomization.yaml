@@ -13,6 +13,11 @@ resources:
   - service_redis.yaml # The file you provided
   - pvc_redis.yaml
   - secret_redis.yaml
+  # Vault Resources
+  - deployment_vault.yaml
+  - service_vault.yaml
+  - pvc_vault.yaml
+  - configmap_vault.yaml
   # Ansible Runner Resources
   - deployment_server.yaml
   - deployment_worker.yaml

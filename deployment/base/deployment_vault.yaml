@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ansiblerunner-vault
+  namespace: ansible-runner
+  labels:
+    app: ansiblerunner-vault
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ansiblerunner-vault
+  template:
+    metadata:
+      labels:
+        app: ansiblerunner-vault
+    spec:
+      volumes: # Define volumes first
+        - name: vault-data
+          persistentVolumeClaim:
+            claimName: ansiblerunner-vault-pvc
+        - name: vault-config # Volume for the configmap
+          configMap:
+            name: ansiblerunner-vault-config
+        - name: vault-tls # Volume for the TLS secret
+          secret:
+            secretName: server-cert # Matches secretGenerator name in kustomization.yaml
+      containers:
+        - name: vault
+          image: hashicorp/vault:1.16.3 # Use a specific version
+          imagePullPolicy: IfNotPresent
+          command: ["vault"]
+          args: ["server", "-config=/vault/config/vault-config.hcl"]
+          ports:
+            - containerPort: 8200
+              name: api-port
+          env:
+            - name: VAULT_DEV_ROOT_TOKEN_ID
+              value: "s.L7DurDkdWC5bTMNLQX6J8mnS"
+          volumeMounts:
+            - name: vault-data
+              mountPath: /vault/file # Matches storage path in config
+            - name: vault-config # Mount the config file
+              mountPath: /vault/config
+              readOnly: true
+            - name: vault-tls # Mount the TLS certs
+              mountPath: /vault/tls
+              readOnly: true
+          securityContext:
+            capabilities:
+              add:
+                - IPC_LOCK
