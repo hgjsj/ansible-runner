@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -34,6 +35,63 @@ func GetPlaybooks(baseDir string) ([]string, error) {
 
 }
 
+func peparedJob(job *models.AnsibleJob, ansible *models.Ansible)(string, error) {
+	job.Step = "Pre-job"
+	var jobDir = filepath.Join(viper.GetString("job.baseDir"), job.ID.Hex())
+	var vaultURL = viper.GetString("vault.uri")
+	vaultToken, err := utils.Decrypt(viper.GetString("vault.token"))
+	
+	if err != nil {
+		return "Decrypt vault token failed", err
+	}
+	ansible.Args = append(ansible.Args, fmt.Sprintf("--extra-vars=\"job_dir=%s vault_address=%s vault_token=%s\"", jobDir, vaultURL, vaultToken))	
+	var preJob = models.Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
+	job.Status = models.Preparing
+	job.Step = "Pre-job"
+	db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
+	o, e := preJob.Run(ansible)
+	if e != nil {
+		job.Status = models.Failed
+		job.Error = e.Error()
+		return o, e
+	} 
+	job.Status = models.Prepared
+	return o, nil
+	
+	
+}
+
+func doJob(job *models.AnsibleJob, ansible *models.Ansible)(string, error) {
+	//reset extra vars, remove --extra-vars from ansible.Args
+	for i, arg := range ansible.Args {
+		if strings.HasPrefix(arg, "--extra-vars=") {
+			ansible.Args = append(ansible.Args[:i], ansible.Args[i+1:]...)
+			break
+		}
+	}
+	var playbook = models.Playbook{Name: job.Playbook, ProjectDir: viper.GetString("playbook.baseDir")}
+	job.Status = models.Running
+	job.Step = "Job"
+	job.Playbook = playbook.Name
+
+	var signedCert = filepath.Join(viper.GetString("job.baseDir"), job.ID.Hex(), "p4s_signed_cert")
+	ansible.Args = append(ansible.Args, fmt.Sprintf("--private-key=%s", signedCert))
+	if len(job.OutputPlugin) > 0 {
+		ansible.Env = outputPluginMap[job.OutputPlugin]
+	}
+	db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
+	o, e := playbook.Run(ansible)
+	if e != nil {
+		job.Status = models.Failed
+		job.Output = o
+		job.Error = e.Error()
+		return o, e
+	} 
+	job.Status = models.Completed
+	job.Output = o
+	return o, nil
+}
+
 func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {	
 	outloop:
 	for{
@@ -41,40 +99,15 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 		case  job := <- c:
 			utils.Log.Info(fmt.Sprintf("Status %s is arrived", job.Status))
 			if job.Status == models.Scheduled {
-				var preJob = models.Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
-				job.Status = models.Preparing
-				job.Step = "Pre-job"
-				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
-				o, e := preJob.Run(ansible)
-				if e != nil {
-					job.Status = models.Failed
-					job.Error = e.Error()
-				} else {
-					job.Status = models.Prepared
-					utils.Log.Info(fmt.Sprintf("Pre-job run is ok and output %s", o))
+				if output, err := peparedJob(job, ansible); err == nil {
+					utils.Log.Info(fmt.Sprintf("Pre-job run is ok and output %s", output))
 				}
 				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
-				
 				c <- job
 			} else if job.Status == models.Prepared {
-				var playbook = models.Playbook{Name: job.Playbook, ProjectDir: viper.GetString("playbook.baseDir")}
-				job.Status = models.Running
-				job.Step = "Job"
-				job.Playbook = playbook.Name
-				var signedCert = filepath.Join(viper.GetString("job.baseDir"), job.ID.Hex(), "p4s_signed_cert")
-				ansible.Args = append(ansible.Args, fmt.Sprintf("--private-key=%s", signedCert))
-				if len(job.OutputPlugin) > 0 {
-				    ansible.Env = outputPluginMap[job.OutputPlugin]
-				}
-				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
-				o, e := playbook.Run(ansible)
-				if e != nil {
-					job.Status = models.Failed
-					job.Error = e.Error()
-				} else {
-					job.Status = models.Completed
-					job.Output = o
-				}
+				if output, err := doJob(job, ansible); err == nil {
+					utils.Log.Info(fmt.Sprintf("Job run is ok and output %s", output))
+				} 
 				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
 				
 				c <- job
@@ -129,7 +162,6 @@ func RunPlaybook(j string, i string, o string) (*models.AnsibleJob, error) {
 
 	var ansible = models.NewAnsible("playbook")
 	ansible.Args = append(ansible.Args, fmt.Sprintf("--inventory-file=%s", inventoryFile))
-	ansible.Args = append(ansible.Args, fmt.Sprintf("--extra-vars=job_dir=%s", filepath.Join(b, job.ID.Hex())))	
 	done := make(chan *models.AnsibleJob, 1)
 	done <- job
 	go jobHandler(done, ansible)

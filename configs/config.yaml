@@ -33,3 +33,6 @@ ldap:
   port: 389
   baseDN: "OU=Employees,OU=Accounts,DC=sec,DC=entsvcs,DC=com"
   requiredGroup: "CN=TEAM_INT_PE-ESO4SAP"
+vault:
+  uri: "https://pln-n1-p4sauto3.env01.mcloud.entsvcs.net:8200"
+  token: 02664778dce3e35a1d67452bcfef0c041e04febff29abe7f5a79
