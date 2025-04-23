@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
+    "gopkg.in/yaml.v3"
 	"github.com/spf13/viper"
 )
 
@@ -44,11 +44,36 @@ func peparedJob(job *models.AnsibleJob, ansible *models.Ansible)(string, error) 
 	if err != nil {
 		return "Decrypt vault token failed", err
 	}
-	ansible.Args = append(ansible.Args, fmt.Sprintf("--extra-vars=\"job_dir=%s vault_address=%s vault_token=%s\"", jobDir, vaultURL, vaultToken))	
+
+	// create a yaml file extra-vars.yaml for ansible
+	extraVarsFile := filepath.Join(jobDir, "extra-vars.yaml")
+	extraVarsData := map[string]string{
+		"job_dir":       jobDir,
+		"vault_address": vaultURL,
+		"vault_token":   vaultToken,
+	}
+	file, err := os.Create(extraVarsFile)
+	if err != nil {
+		job.Status = models.Failed
+		job.Error = err.Error()
+		return "", err
+	}
+	defer file.Close()
+	
+	encoder := yaml.NewEncoder(file)
+	encoder.SetIndent(2)
+	err = encoder.Encode(extraVarsData)
+	if err != nil {
+		job.Status = models.Failed
+		job.Error = err.Error()
+		return "", err
+	}
+
+	ansible.Args = append(ansible.Args, fmt.Sprintf("--extra-vars=@%s", extraVarsFile))
+
 	var preJob = models.Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
 	job.Status = models.Preparing
 	job.Step = "Pre-job"
-	db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
 	o, e := preJob.Run(ansible)
 	if e != nil {
 		job.Status = models.Failed
@@ -79,7 +104,6 @@ func doJob(job *models.AnsibleJob, ansible *models.Ansible)(string, error) {
 	if len(job.OutputPlugin) > 0 {
 		ansible.Env = outputPluginMap[job.OutputPlugin]
 	}
-	db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
 	o, e := playbook.Run(ansible)
 	if e != nil {
 		job.Status = models.Failed
@@ -101,7 +125,7 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 			if job.Status == models.Scheduled {
 				if output, err := peparedJob(job, ansible); err == nil {
 					utils.Log.Info(fmt.Sprintf("Pre-job run is ok and output %s", output))
-				}
+				} 
 				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
 				c <- job
 			} else if job.Status == models.Prepared {
@@ -150,11 +174,14 @@ func RunPlaybook(j string, i string, o string) (*models.AnsibleJob, error) {
 	utils.Log.Info(fmt.Sprintf("Add localhost %s to inventory", inv.Localhost.Name))
 
 	var b = viper.GetString("job.baseDir")	
+
+	// create a directory for the job as basis
 	if err := os.MkdirAll(filepath.Join(b, job.ID.Hex()), os.ModePerm); err != nil {
 		utils.Log.Error(err.Error())
 		return nil, err
 	}
 
+	// create inventory file for job
 	var inventoryFile = filepath.Join(b, job.ID.Hex(), "hosts.yml")
 	if err := inv.ToYaml(inventoryFile); err != nil {
 		return nil, err
