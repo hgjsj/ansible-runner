@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: server
-          image: artifactory.platformdxc-mg.com/vpcp4s-docker/ansible-runner:0.0.2 # Replace with the actual image tag
+          image: artifactory.platformdxc-mg.com/vpcp4s-docker/ansible-runner:latest
           imagePullPolicy: IfNotPresent
           command: ["./ansible-runner"]
           args: ["server"]
