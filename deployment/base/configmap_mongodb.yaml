@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ansiblerunner--configmap
+  name: ansiblerunner-mongodb-configmap
   namespace: ansible-runner
 data:
   mongodb_init_db.js: |

@@ -8,13 +8,15 @@ mkdir -p build_context/runner/configs
 cp -r /opt/ansible-runner/configs/config.docker.yaml build_context/runner/configs/config.yaml
 
 # Build the project
-docker build -t ansible-runner:$1 -t ansible-runner:latest -f deployment/Dockerfile .
+docker build -t ansible-runner:$1 -f deployment/Dockerfile .
 
 if [ "$2" = "push" ]; then
     # Push the image to artifactory
     docker login -u fsun4 artifactory.platformdxc-mg.com/vpcp4s-docker
 
     docker tag ansible-runner:$1 artifactory.platformdxc-mg.com/vpcp4s-docker/ansible-runner:$1
+
+    docker tag ansible-runner:$1 artifactory.platformdxc-mg.com/vpcp4s-docker/ansible-runner:latest
 
     docker push artifactory.platformdxc-mg.com/vpcp4s-docker/ansible-runner:$1
 
