@@ -16,7 +16,7 @@ import (
 type LaunchRequest struct {
 	Playbook  string `json:"playbook"`
 	Inventory string `json:"inventory"`
-	OutputPlugin string `json:"OutputPlugin,omitempty"`
+	OutputPlugin string `json:"outputplugin,omitempty"`
 }
 
 var playbookList []string = []string{"p4s_account_validate.yml"}

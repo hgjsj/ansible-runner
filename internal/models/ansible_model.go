@@ -40,7 +40,7 @@ type AnsibleJob struct {
 	StartTime time.Time          `json:"start_time,omitempty"`
 	EndTime   time.Time          `json:"end_time,omitempty"`
 	InventoryID primitive.ObjectID `bson:"inventory_id,omitempty" json:"inventory_id,omitempty"`
-	OutputPlugin string `json:"extra_vars,omitempty"`
+	OutputPlugin string `json:"output_plugin,omitempty"`
 }
 
 // enum for job status
