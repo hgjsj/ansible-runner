@@ -29,8 +29,8 @@ func newAsynqClient() *asynq.Client {
 // EnqueueJobTask represents a job task.
 func EnqueueJobTask(job *models.AnsibleJob, inventory *models.Inventory) (string, error) {
 	JobTask := JobTask{
-		Job:       job,
-		Inventory: inventory,
+		Job:       *job,
+		Inventory: *inventory,
 	}
 
 	jt, err := json.Marshal(JobTask)
