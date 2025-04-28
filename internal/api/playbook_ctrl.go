@@ -62,6 +62,7 @@ func LaunchPlaybook(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("Inventory %s is not exists with error %s", requestBody.Inventory , err.Error()),
 		})
+		return
 	}
 	
 	// save ansible job to db
@@ -69,6 +70,7 @@ func LaunchPlaybook(c *gin.Context) {
 	aj.Playbook = requestBody.Playbook
 	aj.OutputPlugin = requestBody.OutputPlugin
 	aj.Status = models.Scheduled
+	aj.InventoryID = inventory.ID
 	if err := services.SaveJob(aj); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),

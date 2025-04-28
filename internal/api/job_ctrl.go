@@ -82,11 +82,12 @@ func RelaunchJob(c *gin.Context) {
 	}
 
 	// Check Inventory is exists
-	inventory, err := services.GetInventory(job.ID.Hex())
+	inventory, err := services.GetInventory(job.InventoryID.Hex())
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("Inventory %s is not exists with error %s", job.ID.Hex(), err.Error()),
+			"error": fmt.Sprintf("Inventory %s is not exists with error %s", job.InventoryID.Hex(), err.Error()),
 		})
+		return
 	}
 
 	job.Reset()
@@ -101,6 +102,7 @@ func RelaunchJob(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 	
 	c.JSON(http.StatusOK, gin.H{"id": job.ID.Hex()})
