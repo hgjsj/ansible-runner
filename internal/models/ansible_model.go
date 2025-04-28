@@ -168,8 +168,6 @@ func (j *AnsibleJob) Reset() {
 	j.StartTime = time.Time{}
 	j.EndTime = time.Time{}
 	j.Step = ""
-	j.InventoryID = primitive.NilObjectID
-	j.OutputPlugin = ""
 }
 
 // NewInventory creates a new Ansible inventory.

@@ -80,8 +80,15 @@ func RelaunchJob(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	inventoryID := job.InventoryID.Hex()
-	outputPlugin := job.OutputPlugin
+
+	// Check Inventory is exists
+	inventory, err := services.GetInventory(job.ID.Hex())
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Sprintf("Inventory %s is not exists with error %s", job.ID.Hex(), err.Error()),
+		})
+	}
+
 	job.Reset()
 
 	if err := services.SaveJob(job); err != nil {
@@ -90,7 +97,7 @@ func RelaunchJob(c *gin.Context) {
 	}
 
 	utils.Log.Info(fmt.Sprintf("Relaunch job %s and response", job.ID))
-	_, err = tasks.EnqueueJobTask(job.ID.Hex(), inventoryID, outputPlugin)
+	_, err = tasks.EnqueueJobTask(job, inventory)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

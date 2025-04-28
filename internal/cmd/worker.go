@@ -17,6 +17,7 @@ func PostWorkerRun(cmd *cobra.Command, args []string) {
 	<-quit
 	utils.Log.Info("Cleanup and shutting down worker...")
 	tasks.Close()
+	tasks.CloseClient()
 	db.MongoClient.Close()
 	utils.CleanUp()
 }
@@ -29,7 +30,7 @@ var workerCmd = &cobra.Command{
 		utils.InitLogger()
 
 		go func ()  {
-			if err := tasks.LaunchServer(); err != nil {
+			if err := tasks.LaunchServer("worker"); err != nil {
 				utils.Log.Error(err.Error())
 				panic(err)
 			}

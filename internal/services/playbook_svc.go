@@ -1,7 +1,6 @@
 package services
 
 import (
-	"ansible-runner/internal/db"
 	"ansible-runner/internal/models"
 	"ansible-runner/internal/utils"
 	"fmt"
@@ -9,8 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-    "gopkg.in/yaml.v3"
+
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 var outputPluginMap = map[string][]string{
@@ -116,7 +116,7 @@ func doJob(job *models.AnsibleJob, ansible *models.Ansible)(string, error) {
 	return o, nil
 }
 
-func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {	
+func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible, updateStatusCallback func (*models.AnsibleJob) error) {	
 	outloop:
 	for{
 		select {
@@ -126,18 +126,17 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 				if output, err := peparedJob(job, ansible); err == nil {
 					utils.Log.Info(fmt.Sprintf("Pre-job run is ok and output %s", output))
 				} 
-				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
+				updateStatusCallback(job)
 				c <- job
 			} else if job.Status == models.Prepared {
 				if output, err := doJob(job, ansible); err == nil {
 					utils.Log.Info(fmt.Sprintf("Job run is ok and output %s", output))
 				} 
-				db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
-				
+				updateStatusCallback(job)
 				c <- job
 			} else {
                 job.EndTime = time.Now()
-                db.NewMongoClient().Persist(db.NewMongoClient().JobCollection, job.ID.Hex(), job)
+                updateStatusCallback(job)
 				// Run Clean up job
 				if err := os.RemoveAll(filepath.Join(viper.GetString("job.baseDir"), job.ID.Hex())); err != nil {
 					utils.Log.Error(err.Error())
@@ -150,48 +149,32 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {
 }
 
 // RunPlaybook launches the specified playbook.
-func RunPlaybook(j string, i string, o string) (*models.AnsibleJob, error) {
-	utils.Log.Info(fmt.Sprintf("job id is %s and inventory id is %s", j, i))
-	job, err := db.Retrieve[models.AnsibleJob](db.NewMongoClient(),db.NewMongoClient().JobCollection, j)
-	if err != nil{
-		return nil, err
-	} 
-	utils.Log.Info(fmt.Sprintf("Get job name %s from mongodb", job.ID))
-    job.StartTime = time.Now()
-
-	inv, err := db.Retrieve[models.Inventory](db.NewMongoClient(),db.NewMongoClient().InventoryCollection, i)
+func RunPlaybook(j *models.AnsibleJob, i *models.Inventory, updateJobFunc func(*models.AnsibleJob) error) (*models.AnsibleJob, error) {
+	utils.Log.Info(fmt.Sprintf("job id is %s and inventory id is %s", j.ID.Hex(), i.ID.Hex()))
 	
-	if err != nil {
-		return nil, err
-	}
-	
-	utils.Log.Info(fmt.Sprintf("Get inventory name %s from mongodb", inv.Name))
-
-	job.InventoryID = inv.ID
-	job.OutputPlugin = o
-	inv.AddLocalhost()
-
-	utils.Log.Info(fmt.Sprintf("Add localhost %s to inventory", inv.Localhost.Name))
+	j.StartTime = time.Now()
+	i.AddLocalhost()
+	utils.Log.Info(fmt.Sprintf("Add localhost %s to inventory", i.Localhost.Name))
 
 	var b = viper.GetString("job.baseDir")	
 
 	// create a directory for the job as basis
-	if err := os.MkdirAll(filepath.Join(b, job.ID.Hex()), os.ModePerm); err != nil {
+	if err := os.MkdirAll(filepath.Join(b, j.ID.Hex()), os.ModePerm); err != nil {
 		utils.Log.Error(err.Error())
 		return nil, err
 	}
 
 	// create inventory file for job
-	var inventoryFile = filepath.Join(b, job.ID.Hex(), "hosts.yml")
-	if err := inv.ToYaml(inventoryFile); err != nil {
+	var inventoryFile = filepath.Join(b, j.ID.Hex(), "hosts.yml")
+	if err := i.ToYaml(inventoryFile); err != nil {
 		return nil, err
 	}
 
 	var ansible = models.NewAnsible("playbook")
 	ansible.Args = append(ansible.Args, fmt.Sprintf("--inventory-file=%s", inventoryFile))
 	done := make(chan *models.AnsibleJob, 1)
-	done <- job
-	go jobHandler(done, ansible)
+	done <- j
+	go jobHandler(done, ansible, updateJobFunc)
 
-	return job, nil
+	return j, nil
 }

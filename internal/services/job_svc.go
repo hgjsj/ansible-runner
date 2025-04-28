@@ -3,8 +3,9 @@ package services
 import (
 	"ansible-runner/internal/db"
 	"ansible-runner/internal/models"
-
+	"time"
 	"fmt"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -18,7 +19,6 @@ func GetJob(id string) (*models.AnsibleJob, error) {
 	return j, nil
 	
 }
-
 
 // SaveJob saves a job.
 func SaveJob(job *models.AnsibleJob) error {
@@ -48,3 +48,34 @@ func DeleteJob(id string) error {
 	
 }	
 
+// UpdateJobStatus updates a job status by its ID.	
+func UpdateJobStatus(job *models.AnsibleJob) error {
+	j, err := GetJob(job.ID.Hex())
+	if err != nil {
+		return err
+	}
+
+	if len(job.Status) > 0{
+		j.Status = job.Status
+	}
+	
+	if len(job.Step) > 0{
+		j.Step = job.Step
+	}
+	if len(job.Error) > 0{
+		j.Error = job.Error
+	}
+
+	if len(job.Output) > 0{
+		j.Output = job.Output
+	}
+
+	if time.Time.IsZero(job.StartTime) == false{
+		j.StartTime = job.StartTime
+	}
+	
+	if time.Time.IsZero(job.EndTime) == false{
+		j.EndTime = job.EndTime
+	}
+	return SaveJob(j)
+}

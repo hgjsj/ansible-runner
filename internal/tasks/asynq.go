@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"ansible-runner/internal/models"
 	"ansible-runner/internal/services"
 	"ansible-runner/internal/utils"
 	"context"
@@ -32,23 +33,18 @@ func newAsyncServer() *asynq.Server {
 	return asynqServer
 }
 
-// JobTask represents a job task.
-type JobTask struct {
-	ID          string           `json:"id,omitempty"`
-	InventoryID string           `json:"inventoryid,omitempty"`
-	OutputPlugin   string `json:"extra_vars,omitempty"`
-}
+
 
 // HandleAnsibleJobTask is a handler for the job task.
 func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
-	var p JobTask
+	var j JobTask
 	utils.Log.Info("Unmarsh job task start")
-	if err := json.Unmarshal(t.Payload(), &p); err != nil {
+	if err := json.Unmarshal(t.Payload(), &j); err != nil {
 		utils.Log.Error(err.Error())
 		return err
 	}
 	utils.Log.Info("Unmarsh job task done")
-	_, err := services.RunPlaybook(p.ID, p.InventoryID, p.OutputPlugin)
+	_, err := services.RunPlaybook(j.Job, j.Inventory, EnqueueJobStatusTask)
 	if err != nil {
 		return err
 	}
@@ -56,14 +52,38 @@ func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 }
 
 // LaunchServer starts the asynq server and handles the job task.
-func LaunchServer() error {
+func LaunchServer(srvType string) error {
 	if newAsyncServer() == nil  {
 		utils.Log.Error("can not create asynq server")
 		return fmt.Errorf("can not create asynq server")
 	}
-	mux.HandleFunc("ansiblejob", HandleAnsibleJobTask)
+
+	if srvType == "server" {
+		mux.HandleFunc("ansiblejob", HandleAnsibleJobTask)
+	} else if srvType == "worker" {
+		mux.HandleFunc("ansiblejobstatus", HandleAnsibleJobStatusTask)
+	} else {
+		utils.Log.Error("Not supported server type, choose server or worker")
+		return fmt.Errorf("Not supported server type, choose server or worker")
+	}
 	if err := newAsyncServer().Run(mux); err != nil {
 		utils.Log.Error(err.Error())
+		return err
+	}
+	return nil
+}
+
+// HandleAnsibleJobStatusTask is a handler for the job status task.
+func HandleAnsibleJobStatusTask(ctx context.Context, t *asynq.Task) error {
+	var js models.AnsibleJob
+	utils.Log.Info("Unmarsh job status task start")
+	if err := json.Unmarshal(t.Payload(), &js); err != nil {
+		utils.Log.Error(err.Error())
+		return err
+	}
+	utils.Log.Info("Unmarsh job status task done")
+	err := services.UpdateJobStatus(&js)
+	if err != nil {
 		return err
 	}
 	return nil

@@ -31,6 +31,7 @@ func cleanup(cmd *cobra.Command, args []string) {
 		srv.Shutdown(ctx)
 	}
 	tasks.CloseClient()
+	tasks.Close()
 	db.MongoClient.Close()
 	utils.CleanUp()
 }
@@ -46,6 +47,11 @@ func server() {
 
 	go func() {
 		if err := srv.ListenAndServeTLS("./cert/server.crt", "./cert/server.key"); err != nil && err != http.ErrServerClosed {
+			utils.Log.Error(err.Error())
+			panic(err)
+		}
+
+		if err := tasks.LaunchServer("server"); err != nil {
 			utils.Log.Error(err.Error())
 			panic(err)
 		}
