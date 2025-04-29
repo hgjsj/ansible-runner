@@ -44,7 +44,7 @@ func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 		return err
 	}
 	utils.Log.Info("Unmarsh job task done")
-	_, err := services.RunPlaybook(&j.Job, &j.Inventory, EnqueueJobStatusTask)
+	_, err := services.RunPlaybook(j.Job, j.Inventory, EnqueueJobStatusTask)
 	if err != nil {
 		return err
 	}
@@ -59,8 +59,10 @@ func LaunchServer(srvType string) error {
 	}
 
 	if srvType == "server" {
+		utils.Log.Info("ansible-runner serer started with HandleAnsibleJobStatusTask")
 		mux.HandleFunc("ansiblejobstatus", HandleAnsibleJobStatusTask)
 	} else if srvType == "worker" {
+		utils.Log.Info("ansible-runner worker started with HandleAnsibleJobTask")
 		mux.HandleFunc("ansiblejob", HandleAnsibleJobTask)
 	} else {
 		utils.Log.Error("Not supported server type, choose server or worker")

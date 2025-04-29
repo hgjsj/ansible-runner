@@ -28,9 +28,10 @@ func newAsynqClient() *asynq.Client {
 
 // EnqueueJobTask represents a job task.
 func EnqueueJobTask(job *models.AnsibleJob, inventory *models.Inventory) (string, error) {
+	utils.Log.Info("Enqueue job task to queue")
 	JobTask := JobTask{
-		Job:       *job,
-		Inventory: *inventory,
+		Job:       job,
+		Inventory: inventory,
 	}
 
 	jt, err := json.Marshal(JobTask)
@@ -56,6 +57,7 @@ func CloseClient() {
 
 // EnqueueJobStatusTask represents a job status task.
 func EnqueueJobStatusTask(job *models.AnsibleJob) error {
+	utils.Log.Info("Enqueue job status task to queue")
 	jst, err := json.Marshal(job)
 	if err != nil {
 		utils.Log.Error(err.Error())

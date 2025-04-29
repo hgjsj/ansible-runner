@@ -126,16 +126,19 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible, updateStatus
 				if output, err := peparedJob(job, ansible); err == nil {
 					utils.Log.Info(fmt.Sprintf("Pre-job run is ok and output %s", output))
 				} 
+				utils.Log.Info("pre-job is done and callback to update job status")
 				updateStatusCallback(job)
 				c <- job
 			} else if job.Status == models.Prepared {
 				if output, err := doJob(job, ansible); err == nil {
 					utils.Log.Info(fmt.Sprintf("Job run is ok and output %s", output))
 				} 
+				utils.Log.Info("job is done and callback to update job status")
 				updateStatusCallback(job)
 				c <- job
 			} else {
                 job.EndTime = time.Now()
+				utils.Log.Info("update end time of job and callback to update job status")
                 updateStatusCallback(job)
 				// Run Clean up job
 				if err := os.RemoveAll(filepath.Join(viper.GetString("job.baseDir"), job.ID.Hex())); err != nil {
