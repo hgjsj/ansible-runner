@@ -50,7 +50,9 @@ func server() {
 			utils.Log.Error(err.Error())
 			panic(err)
 		}
+	}()
 
+	go func ()  {
 		if err := tasks.LaunchServer("server"); err != nil {
 			utils.Log.Error(err.Error())
 			panic(err)

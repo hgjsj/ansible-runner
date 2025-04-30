@@ -60,7 +60,7 @@ func LaunchServer(srvType string) error {
 
 	if srvType == "server" {
 		utils.Log.Info("ansible-runner serer started with HandleAnsibleJobStatusTask")
-		mux.HandleFunc("ansiblejobstatus", HandleAnsibleJobStatusTask)
+		mux.HandleFunc("jobstatusupdate", HandleAnsibleJobStatusTask)
 	} else if srvType == "worker" {
 		utils.Log.Info("ansible-runner worker started with HandleAnsibleJobTask")
 		mux.HandleFunc("ansiblejob", HandleAnsibleJobTask)

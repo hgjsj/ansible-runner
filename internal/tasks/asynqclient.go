@@ -41,11 +41,14 @@ func EnqueueJobTask(job *models.AnsibleJob, inventory *models.Inventory) (string
 	}
 
 	task := asynq.NewTask("ansiblejob", jt)
-	if _, err := newAsynqClient().Enqueue(task, asynq.MaxRetry(0)); err != nil {
+	if ti, err := newAsynqClient().Enqueue(task, asynq.MaxRetry(0)); err != nil {
 		utils.Log.Error(err.Error())
 		return "", err
+	} else {
+		utils.Log.Info("Enqueue job task to queue with id %s and state %s", ti.ID, ti.State)
+		return job.ID.Hex(), nil
 	}
-	return job.ID.Hex(), nil
+	
 }
 
 // CloseClient closes the asynq client.
@@ -63,10 +66,12 @@ func EnqueueJobStatusTask(job *models.AnsibleJob) error {
 		utils.Log.Error(err.Error())
 		return  err
 	}
-	task := asynq.NewTask("ansiblejobstatus", jst)
-	if _, err := newAsynqClient().Enqueue(task, asynq.MaxRetry(0)); err != nil {
+	task := asynq.NewTask("jobstatusupdate", jst)
+	if ti, err := newAsynqClient().Enqueue(task, asynq.MaxRetry(0)); err != nil {
 		utils.Log.Error(err.Error())
 		return  err
+	} else {
+		utils.Log.Info("Enqueue job status task to queue with id %s and state %s", ti.ID, ti.State)
+		return nil
 	}
-	return nil
 }
