@@ -4,6 +4,8 @@ import (
 	"ansible-runner/internal/models"
 	"ansible-runner/internal/utils"
 	"encoding/json"
+	"fmt"
+
 	"github.com/hibiken/asynq"
 	"github.com/spf13/viper"
 )
@@ -45,7 +47,7 @@ func EnqueueJobTask(job *models.AnsibleJob, inventory *models.Inventory) (string
 		utils.Log.Error(err.Error())
 		return "", err
 	} else {
-		utils.Log.Info("Enqueue job task to queue with id %s and state %s", ti.ID, ti.State)
+		utils.Log.Info(fmt.Sprintf("Enqueue job task to queue with id %s and state %s", ti.ID, ti.State))
 		return job.ID.Hex(), nil
 	}
 	
@@ -58,20 +60,3 @@ func CloseClient() {
 	}
 }
 
-// EnqueueJobStatusTask represents a job status task.
-func EnqueueJobStatusTask(job *models.AnsibleJob) error {
-	utils.Log.Info("Enqueue job status task to queue")
-	jst, err := json.Marshal(job)
-	if err != nil {
-		utils.Log.Error(err.Error())
-		return  err
-	}
-	task := asynq.NewTask("jobstatusupdate", jst)
-	if ti, err := newAsynqClient().Enqueue(task, asynq.MaxRetry(0)); err != nil {
-		utils.Log.Error(err.Error())
-		return  err
-	} else {
-		utils.Log.Info("Enqueue job status task to queue with id %s and state %s", ti.ID, ti.State)
-		return nil
-	}
-}

@@ -3,12 +3,14 @@ package services
 import (
 	"ansible-runner/internal/models"
 	"ansible-runner/internal/utils"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/hibiken/asynq"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
@@ -116,7 +118,33 @@ func doJob(job *models.AnsibleJob, ansible *models.Ansible)(string, error) {
 	return o, nil
 }
 
-func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible, updateStatusCallback func (*models.AnsibleJob) error) {	
+func updateStatusCallback(job *models.AnsibleJob) error {
+	redisAddr := viper.GetString("redis.uri")
+	password, err := utils.Decrypt(viper.GetString("redis.password"))
+	if err != nil {
+		utils.Log.Error(err.Error())
+		panic(err)
+	}
+
+	c := asynq.NewClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password})
+	defer c.Close()
+
+	jst, err := json.Marshal(job)
+	if err != nil {
+		utils.Log.Error(err.Error())
+		return  err
+	}
+	task := asynq.NewTask("jobstatusupdate", jst)
+	if ti, err := c.Enqueue(task, asynq.MaxRetry(0)); err != nil {
+		utils.Log.Error(err.Error())
+		return  err
+	} else {
+		utils.Log.Info(fmt.Sprintf("Enqueue job status task to queue with id %s and state %s", ti.ID, ti.State))
+		return nil
+	}
+}
+
+func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible) {	
 	outloop:
 	for{
 		select {
@@ -152,7 +180,7 @@ func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible, updateStatus
 }
 
 // RunPlaybook launches the specified playbook.
-func RunPlaybook(j *models.AnsibleJob, i *models.Inventory, updateJobFunc func(*models.AnsibleJob) error) (*models.AnsibleJob, error) {
+func RunPlaybook(j *models.AnsibleJob, i *models.Inventory) (*models.AnsibleJob, error) {
 	utils.Log.Info(fmt.Sprintf("job id is %s and inventory id is %s", j.ID.Hex(), i.ID.Hex()))
 	
 	j.StartTime = time.Now()
@@ -177,7 +205,7 @@ func RunPlaybook(j *models.AnsibleJob, i *models.Inventory, updateJobFunc func(*
 	ansible.Args = append(ansible.Args, fmt.Sprintf("--inventory-file=%s", inventoryFile))
 	done := make(chan *models.AnsibleJob, 1)
 	done <- j
-	jobHandler(done, ansible, updateJobFunc)
+	jobHandler(done, ansible)
 
 	return j, nil
 }

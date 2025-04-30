@@ -44,7 +44,7 @@ func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 		return err
 	}
 	utils.Log.Info("Unmarsh job task done")
-	_, err := services.RunPlaybook(j.Job, j.Inventory, EnqueueJobStatusTask)
+	_, err := services.RunPlaybook(j.Job, j.Inventory)
 	if err != nil {
 		return err
 	}
