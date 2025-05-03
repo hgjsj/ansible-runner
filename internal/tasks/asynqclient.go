@@ -4,6 +4,7 @@ import (
 	"ansible-runner/internal/models"
 	"ansible-runner/internal/utils"
 	"encoding/json"
+	"fmt"
 	"github.com/hibiken/asynq"
 	"github.com/spf13/viper"
 )
@@ -45,7 +46,7 @@ func EnqueueJobTask(job *models.AnsibleJob, inventory *models.Inventory) (string
 		utils.Log.Error(err.Error())
 		return "", err
 	} else {
-		utils.Log.Info("Enqueue job task to queue with id %s and state %s", ti.ID, ti.State)
+		utils.Log.Info(fmt.Sprintf("Enqueue job task to queue with id %s and state %s", ti.ID, ti.State))
 		return job.ID.Hex(), nil
 	}
 	
