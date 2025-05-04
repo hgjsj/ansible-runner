@@ -7,10 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-
 	"github.com/hibiken/asynq"
-	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 )
 
@@ -28,13 +25,13 @@ func newAsyncServer() *asynq.Server {
 		utils.Log.Error(err.Error())
 		return nil
 	}
-	asynqServer = asynq.NewServerFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, PoolSize: 20}.MakeRedisClient().(redis.UniversalClient), 
-		asynq.Config{Concurrency: 20, LogLevel: asynq.DebugLevel})
+	asynqServer = asynq.NewServer(asynq.RedisClientOpt{Addr: redisAddr, Password: password, PoolSize: 20}, asynq.Config{Concurrency: 20, LogLevel: asynq.InfoLevel})
+	//asynqServer = asynq.NewServerFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, PoolSize: 20}.MakeRedisClient().(redis.UniversalClient), 
+	//	asynq.Config{Concurrency: 20, LogLevel: asynq.InfoLevel})
 			// ErrorHandler: func(ctx context.Context, t *asynq.Task, err error) {})
 	mux = asynq.NewServeMux()
 	return asynqServer
 }
-
 
 
 // HandleAnsibleJobTask is a handler for the job task.
