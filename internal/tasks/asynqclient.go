@@ -5,7 +5,9 @@ import (
 	"ansible-runner/internal/utils"
 	"encoding/json"
 	"fmt"
+
 	"github.com/hibiken/asynq"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 )
 
@@ -21,8 +23,9 @@ func newAsynqClient() *asynq.Client {
 		utils.Log.Error(err.Error())
 		panic(err)
 	}
+	
+	asynqClient = asynq.NewClientFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, PoolSize: 20}.MakeRedisClient().(redis.UniversalClient))
 
-	asynqClient = asynq.NewClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password})
 	// set logger to client
 	return asynqClient
 }

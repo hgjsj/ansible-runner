@@ -7,9 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
+
 
 	"github.com/hibiken/asynq"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 )
 
@@ -27,8 +28,9 @@ func newAsyncServer() *asynq.Server {
 		utils.Log.Error(err.Error())
 		return nil
 	}
-	asynqServer = asynq.NewServer(asynq.RedisClientOpt{Addr: redisAddr, Password: password}, 
-		asynq.Config{Concurrency: 5, ShutdownTimeout: 10 * time.Second})
+	asynqServer = asynq.NewServerFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, PoolSize: 20}.MakeRedisClient().(redis.UniversalClient), 
+		asynq.Config{Concurrency: 20, LogLevel: asynq.DebugLevel})
+			// ErrorHandler: func(ctx context.Context, t *asynq.Task, err error) {})
 	mux = asynq.NewServeMux()
 	return asynqServer
 }

@@ -30,8 +30,8 @@ func cleanup(cmd *cobra.Command, args []string) {
 		defer cancel()
 		srv.Shutdown(ctx)
 	}
-	tasks.CloseClient()
 	tasks.Close()
+	tasks.CloseClient()
 	db.MongoClient.Close()
 	utils.CleanUp()
 }
