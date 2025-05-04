@@ -8,6 +8,7 @@ import (
 	"time"
 	"github.com/hibiken/asynq"
 	"github.com/spf13/viper"
+	"github.com/redis/go-redis/v9"
 )
 
 var asynqClient *asynq.Client
@@ -23,8 +24,8 @@ func newAsynqClient() *asynq.Client {
 		panic(err)
 	}
 	
-	asynqClient = asynq.NewClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, PoolSize: 20})
-	//asynqClient = asynq.NewClientFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, PoolSize: 20}.MakeRedisClient().(redis.UniversalClient))
+	//asynqClient = asynq.NewClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, PoolSize: 20})
+	asynqClient = asynq.NewClientFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password}.MakeRedisClient().(redis.UniversalClient))
 
 	// set logger to client
 	return asynqClient
@@ -45,7 +46,7 @@ func EnqueueJobTask(job *models.AnsibleJob, inventory *models.Inventory) (string
 	}
 
 	task := asynq.NewTask("ansiblejob", jt)
-	if ti, err := newAsynqClient().Enqueue(task, asynq.MaxRetry(0), asynq.Timeout(time.Minute),asynq.Deadline(time.Now().Add(time.Minute))); err != nil {
+	if ti, err := newAsynqClient().Enqueue(task, asynq.MaxRetry(0), asynq.Timeout(3 * time.Minute),asynq.Deadline(time.Now().Add(3 * time.Minute))); err != nil {
 		utils.Log.Error(err.Error())
 		return "", err
 	} else {
@@ -71,7 +72,7 @@ func EnqueueJobStatusTask(job *models.AnsibleJob) error {
 		return  err
 	}
 	task := asynq.NewTask("jobstatusupdate", jst)
-	if ti, err := newAsynqClient().Enqueue(task, asynq.MaxRetry(0),asynq.Timeout(time.Minute),asynq.Deadline(time.Now().Add(time.Minute))); err != nil {
+	if ti, err := newAsynqClient().Enqueue(task, asynq.MaxRetry(0),asynq.Timeout(3 * time.Minute),asynq.Deadline(time.Now().Add(3 * time.Minute))); err != nil {
 		utils.Log.Error(err.Error())
 		return  err
 	} else {
