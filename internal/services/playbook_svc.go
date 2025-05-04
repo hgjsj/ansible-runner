@@ -177,7 +177,7 @@ func RunPlaybook(j *models.AnsibleJob, i *models.Inventory, updateJobFunc func(*
 	ansible.Args = append(ansible.Args, fmt.Sprintf("--inventory-file=%s", inventoryFile))
 	done := make(chan *models.AnsibleJob, 1)
 	done <- j
-	jobHandler(done, ansible, updateJobFunc)
+	go jobHandler(done, ansible, updateJobFunc)
 
 	return j, nil
 }
