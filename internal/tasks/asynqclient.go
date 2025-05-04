@@ -5,6 +5,7 @@ import (
 	"ansible-runner/internal/utils"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
@@ -45,7 +46,7 @@ func EnqueueJobTask(job *models.AnsibleJob, inventory *models.Inventory) (string
 	}
 
 	task := asynq.NewTask("ansiblejob", jt)
-	if ti, err := newAsynqClient().Enqueue(task, asynq.MaxRetry(0)); err != nil {
+	if ti, err := newAsynqClient().Enqueue(task, asynq.MaxRetry(0), asynq.Timeout(3*time.Minute),asynq.Deadline(time.Now().Add(3*time.Minute))); err != nil {
 		utils.Log.Error(err.Error())
 		return "", err
 	} else {
@@ -71,7 +72,7 @@ func EnqueueJobStatusTask(job *models.AnsibleJob) error {
 		return  err
 	}
 	task := asynq.NewTask("jobstatusupdate", jst)
-	if ti, err := newAsynqClient().Enqueue(task, asynq.MaxRetry(0)); err != nil {
+	if ti, err := newAsynqClient().Enqueue(task, asynq.MaxRetry(0),asynq.Timeout(3*time.Minute),asynq.Deadline(time.Now().Add(3*time.Minute))); err != nil {
 		utils.Log.Error(err.Error())
 		return  err
 	} else {

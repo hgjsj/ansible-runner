@@ -6,6 +6,6 @@ import (
 
 // JobTask represents a job task.
 type JobTask struct {
-	Job       *models.AnsibleJob `json:"id,omitempty"`
+	Job       *models.AnsibleJob `json:"job,omitempty"`
 	Inventory *models.Inventory  `json:"inventory,omitempty"`
 }
