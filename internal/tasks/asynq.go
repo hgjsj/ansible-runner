@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/hibiken/asynq"
 	"github.com/spf13/viper"
+	"github.com/redis/go-redis/v9"
 )
 
 var asynqServer *asynq.Server
@@ -25,9 +26,9 @@ func newAsyncServer() *asynq.Server {
 		utils.Log.Error(err.Error())
 		return nil
 	}
-	asynqServer = asynq.NewServer(asynq.RedisClientOpt{Addr: redisAddr, Password: password, ReadTimeout: -1, WriteTimeout: -1, PoolSize: 100}, asynq.Config{Concurrency: 20, LogLevel: asynq.InfoLevel})
-	//asynqServer = asynq.NewServerFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, ReadTimeout: -1, WriteTimeout: -1, PoolSize: 100}.MakeRedisClient().(redis.UniversalClient), 
-	//	asynq.Config{Concurrency: 20, LogLevel: asynq.InfoLevel})
+	//asynqServer = asynq.NewServer(asynq.RedisClientOpt{Addr: redisAddr, Password: password, ReadTimeout: -1, WriteTimeout: -1, PoolSize: 100}, asynq.Config{Concurrency: 20, LogLevel: asynq.InfoLevel})
+	asynqServer = asynq.NewServerFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, ReadTimeout: -1, WriteTimeout: -1, PoolSize: 100}.MakeRedisClient().(redis.UniversalClient), 
+		asynq.Config{Concurrency: 100, LogLevel: asynq.InfoLevel})
 	// ErrorHandler: func(ctx context.Context, t *asynq.Task, err error) {})
 	mux = asynq.NewServeMux()
 	return asynqServer

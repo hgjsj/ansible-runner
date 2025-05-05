@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
+	"github.com/redis/go-redis/v9"
 	"github.com/hibiken/asynq"
 	"github.com/spf13/viper"
 )
@@ -24,8 +24,8 @@ func newAsynqClient() *asynq.Client {
 		panic(err)
 	}
 	
-    asynqClient = asynq.NewClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, ReadTimeout: -1, WriteTimeout: -1, PoolSize: 100})
-	//asynqClient = asynq.NewClientFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, ReadTimeout: -1, WriteTimeout: -1, PoolSize: 100}.MakeRedisClient().(redis.UniversalClient))
+    //asynqClient = asynq.NewClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, ReadTimeout: -1, WriteTimeout: -1, PoolSize: 100})
+	asynqClient = asynq.NewClientFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, ReadTimeout: -1, WriteTimeout: -1, PoolSize: 100}.MakeRedisClient().(redis.UniversalClient))
 
 	//set logger to client
 	return asynqClient
