@@ -11,12 +11,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-//var asynqClient *asynq.Client
+var asynqClient *asynq.Client
 
 func newAsynqClient() *asynq.Client {
-	// if asynqClient != nil {
-	// 	return asynqClient
-	// }
+	if asynqClient != nil {
+		return asynqClient
+	}
 	redisAddr := viper.GetString("redis.uri")
 	password, err := utils.Decrypt(viper.GetString("redis.password"))
 	if err != nil {
@@ -24,11 +24,11 @@ func newAsynqClient() *asynq.Client {
 		panic(err)
 	}
 	
-    return asynq.NewClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, ReadTimeout: -1, WriteTimeout: -1, PoolSize: 100})
+    asynqClient = asynq.NewClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, ReadTimeout: -1, WriteTimeout: -1, PoolSize: 100})
 	//asynqClient = asynq.NewClientFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, ReadTimeout: -1, WriteTimeout: -1, PoolSize: 100}.MakeRedisClient().(redis.UniversalClient))
 
-	// set logger to client
-	//return asynqClient
+	//set logger to client
+	return asynqClient
 }
 
 // EnqueueJobTask represents a job task.
@@ -49,11 +49,9 @@ func EnqueueJobTask(job *models.AnsibleJob, inventory *models.Inventory) (string
 	c := newAsynqClient()
 	ti, err := c.Enqueue(task, asynq.MaxRetry(0), asynq.Timeout(3 * time.Minute), asynq.Deadline(time.Now().Add(3 * time.Minute)))
 	if err != nil {
-		c.Close()
 		utils.Log.Error(err.Error())
 		return "", err
 	}
-	c.Close()
 	utils.Log.Info(fmt.Sprintf("Enqueue job task to queue with id %s and state %s", ti.ID, ti.State))
 	return job.ID.Hex(), nil
 	
@@ -61,9 +59,9 @@ func EnqueueJobTask(job *models.AnsibleJob, inventory *models.Inventory) (string
 
 // CloseClient closes the asynq client.
 func CloseClient() {
-	// if asynqClient != nil {
-	// 	asynqClient.Close()
-	// }
+	if asynqClient != nil {
+		asynqClient.Close()
+	}
 }
 
 // EnqueueJobStatusTask represents a job status task.
@@ -78,11 +76,9 @@ func EnqueueJobStatusTask(job *models.AnsibleJob) error {
 	c := newAsynqClient()
 	ti, err := c.Enqueue(task, asynq.MaxRetry(0), asynq.Timeout(3*time.Minute), asynq.Deadline(time.Now().Add(3*time.Minute)))
 	if err != nil {
-		c.Close()
 		utils.Log.Error(err.Error())
 		return err
 	}
-	c.Close()
 	utils.Log.Info("Enqueue job status task to queue with id %s and state %s", ti.ID, ti.State)
 	return nil
 	

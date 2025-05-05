@@ -82,11 +82,15 @@ func HandleAnsibleJobStatusTask(ctx context.Context, t *asynq.Task) error {
 		utils.Log.Error(err.Error())
 		return err
 	}
-	utils.Log.Info("Unmarsh job status task done")
-	err := services.UpdateJobStatus(&js)
-	if err != nil {
-		return err
-	}
+	go func ()  {
+		utils.Log.Info("Unmarsh job status task done")
+		err := services.UpdateJobStatus(&js)
+		if err != nil {
+			utils.Log.Error(err.Error())
+		}
+		utils.Log.Info(fmt.Sprintf("Update job %s status done", js.ID.Hex()))
+	}()
+
 	return nil
 }
 
