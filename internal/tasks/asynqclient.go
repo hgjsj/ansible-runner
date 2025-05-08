@@ -47,7 +47,7 @@ func EnqueueJobTask(job *models.AnsibleJob, inventory *models.Inventory) (string
 
 	task := asynq.NewTask("ansiblejob", jt)
 	c := newAsynqClient()
-	ti, err := c.Enqueue(task, asynq.MaxRetry(2), asynq.Timeout(time.Minute))
+	ti, err := c.Enqueue(task, asynq.MaxRetry(10), asynq.Timeout(5 * time.Minute))
 	if err != nil {
 		utils.Log.Error(err.Error())
 		return "", err
@@ -74,7 +74,7 @@ func EnqueueJobStatusTask(job *models.AnsibleJob) error {
 	}
 	task := asynq.NewTask("jobstatusupdate", jst)
 	c := newAsynqClient()
-	ti, err := c.Enqueue(task, asynq.MaxRetry(2), asynq.Timeout(time.Minute))
+	ti, err := c.Enqueue(task, asynq.MaxRetry(10), asynq.Timeout(5 * time.Minute))
 	if err != nil {
 		utils.Log.Error(err.Error())
 		return err
