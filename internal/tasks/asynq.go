@@ -13,7 +13,7 @@ import (
 )
 
 var asynqServer *asynq.Server
-var mux *asynq.ServeMux 
+//var mux *asynq.ServeMux 
 
 
 func newAsyncServer(queueName string) *asynq.Server {
@@ -31,7 +31,7 @@ func newAsyncServer(queueName string) *asynq.Server {
 	asynqServer = asynq.NewServerFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, PoolSize: 100}.MakeRedisClient().(redis.UniversalClient), 
 		asynq.Config{Concurrency: 100, LogLevel: asynq.InfoLevel, Queues: map[string]int{queueName: 10}})
 	// ErrorHandler: func(ctx context.Context, t *asynq.Task, err error) {})
-	mux = asynq.NewServeMux()
+	//mux = asynq.NewServeMux()
 	return asynqServer
 }
 
@@ -56,6 +56,7 @@ func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 func LaunchServer(srvType string) error {
 
 	var queueName string
+	mux := asynq.NewServeMux()
 	if srvType == "server" {
 		utils.Log.Info("ansible-runner serer started with HandleAnsibleJobStatusTask for queue jobstatusupdate")
 		mux.HandleFunc("jobstatusupdate", HandleAnsibleJobStatusTask)
