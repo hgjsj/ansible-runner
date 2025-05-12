@@ -75,14 +75,14 @@ func handleTestupdatejobTask(ctx context.Context, t *asynq.Task) error {
 }
 
 func TestAsynqWorker(t *testing.T) {
-	s := newAsyncServer()
+	s := newAsyncServer("default")
 	mux.HandleFunc("testjob", handleTestjobTask)
 	go s.Run(mux)
 
 }
 
 func TestAsynqServer(t *testing.T) {
-	s := newAsyncServer()
+	s := newAsyncServer("default")
 	mux.HandleFunc("testupdatejob", handleTestupdatejobTask)
 	go s.Run(mux)
 

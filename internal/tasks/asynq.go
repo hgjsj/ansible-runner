@@ -16,7 +16,7 @@ var asynqServer *asynq.Server
 var mux *asynq.ServeMux 
 
 
-func newAsyncServer() *asynq.Server {
+func newAsyncServer(queueName string) *asynq.Server {
 	if asynqServer != nil {
 		return asynqServer
 	}
@@ -26,9 +26,10 @@ func newAsyncServer() *asynq.Server {
 		utils.Log.Error(err.Error())
 		return nil
 	}
+
 	//asynqServer = asynq.NewServer(asynq.RedisClientOpt{Addr: redisAddr, Password: password, ReadTimeout: -1, WriteTimeout: -1, PoolSize: 100}, asynq.Config{Concurrency: 20, LogLevel: asynq.InfoLevel})
-	asynqServer = asynq.NewServerFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, ReadTimeout: -1, WriteTimeout: -1, PoolSize: 100}.MakeRedisClient().(redis.UniversalClient), 
-		asynq.Config{Concurrency: 100, LogLevel: asynq.InfoLevel})
+	asynqServer = asynq.NewServerFromRedisClient(asynq.RedisClientOpt{Addr: redisAddr, Password: password, PoolSize: 100}.MakeRedisClient().(redis.UniversalClient), 
+		asynq.Config{Concurrency: 100, LogLevel: asynq.InfoLevel, Queues: map[string]int{queueName: 10}})
 	// ErrorHandler: func(ctx context.Context, t *asynq.Task, err error) {})
 	mux = asynq.NewServeMux()
 	return asynqServer
@@ -53,22 +54,22 @@ func HandleAnsibleJobTask(ctx context.Context, t *asynq.Task) error {
 
 // LaunchServer starts the asynq server and handles the job task.
 func LaunchServer(srvType string) error {
-	if newAsyncServer() == nil  {
-		utils.Log.Error("can not create asynq server")
-		return fmt.Errorf("can not create asynq server")
-	}
 
+	var queueName string
 	if srvType == "server" {
-		utils.Log.Info("ansible-runner serer started with HandleAnsibleJobStatusTask")
+		utils.Log.Info("ansible-runner serer started with HandleAnsibleJobStatusTask for queue jobstatusupdate")
 		mux.HandleFunc("jobstatusupdate", HandleAnsibleJobStatusTask)
+		queueName = "jobstatusupdate"
 	} else if srvType == "worker" {
-		utils.Log.Info("ansible-runner worker started with HandleAnsibleJobTask")
+		utils.Log.Info("ansible-runner worker started with HandleAnsibleJobTask for queue ansiblejob")
 		mux.HandleFunc("ansiblejob", HandleAnsibleJobTask)
+		queueName = "ansiblejob"
 	} else {
 		utils.Log.Error("Not supported server type, choose server or worker")
 		return fmt.Errorf("Not supported server type, choose server or worker")
 	}
-	if err := newAsyncServer().Run(mux); err != nil {
+
+	if err := newAsyncServer(queueName).Run(mux); err != nil {
 		utils.Log.Error(err.Error())
 		return err
 	}
