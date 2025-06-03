@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
 	"github.com/looplab/fsm"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
@@ -39,11 +38,12 @@ func GetPlaybooks(baseDir string) ([]string, error) {
 
 
 // before_prepare is a callback function that runs before the prepare event in the FSM.
-func before_prepare(c context.Context, e *fsm.Event) {
+func beforePrepare(c context.Context, e *fsm.Event) {
 	j := e.Args[0].(*models.AnsibleJob)
 	i := e.Args[1].(*models.Inventory)
 	a := e.Args[2].(*models.Ansible)
 	i.AddLocalhost()
+	utils.Log.Info(fmt.Sprintf("Add localhost %s to inventory", i.Localhost.Name))
 	var b = viper.GetString("job.baseDir")
 	var jobDir = filepath.Join(b, j.ID.Hex())
 	j.StartTime = time.Now()
@@ -60,7 +60,7 @@ func before_prepare(c context.Context, e *fsm.Event) {
 	if err := i.ToYaml(inventoryFile); err != nil {
 		utils.Log.Error(err.Error())
 		j.Status = models.Failed
-		e.FSM.Event(context.Background(), "cleanup", j)
+		e.FSM.SetState(models.Failed)
 		return
 	}
 	a.Args = append(a.Args, fmt.Sprintf("--inventory-file=%s", inventoryFile))
@@ -72,7 +72,7 @@ func before_prepare(c context.Context, e *fsm.Event) {
 	if err != nil {
 		utils.Log.Error(err.Error())
 		j.Status = models.Failed
-		e.FSM.Event(context.Background(), "cleanup", j)
+		e.FSM.SetState(models.Failed)
 		return
 	}
 
@@ -87,7 +87,7 @@ func before_prepare(c context.Context, e *fsm.Event) {
 	if err != nil {
 		utils.Log.Error(err.Error())
 		j.Status = models.Failed
-		e.FSM.Event(context.Background(), "cleanup", j)
+		e.FSM.SetState(models.Failed)
 		return
 	}
 	defer file.Close()
@@ -98,7 +98,7 @@ func before_prepare(c context.Context, e *fsm.Event) {
 	if err != nil {
 		utils.Log.Error(err.Error())
 		j.Status = models.Failed
-		e.FSM.Event(context.Background(), "cleanup", j)
+		e.FSM.SetState(models.Failed)
 		return 
 	}
 	a.Args = append(a.Args, fmt.Sprintf("--extra-vars=@%s", extraVarsFile))
@@ -108,24 +108,26 @@ func before_prepare(c context.Context, e *fsm.Event) {
 	if _, err := preJob.Run(a); err != nil {
 		utils.Log.Error(fmt.Sprintf("Pre-job run failed: %s", err.Error()))
 		j.Status = models.Failed
-		e.FSM.Event(context.Background(), "cleanup", j)
+		e.FSM.SetState(models.Failed)
 		return 
 	}
 	
 	j.Status = models.Prepared
 }
 
-func after_prepare(c context.Context, e *fsm.Event) {
+func afterPrepare(c context.Context, e *fsm.Event) {
 	j := e.Args[0].(*models.AnsibleJob)
 	a := e.Args[2].(*models.Ansible)
 	
 	UpdateJobStatus(j)
 	if e.FSM.Current() == models.Prepared {
 		e.FSM.Event(context.Background(), "run", j, a)
+	} else if e.FSM.Current()== models.Completed {
+		e.FSM.Event(context.Background(), "cleanup", j)
 	}
 }
 
-func before_run(c context.Context, e *fsm.Event) {
+func beforeRun(c context.Context, e *fsm.Event) {
 	j := e.Args[0].(*models.AnsibleJob)
 	a := e.Args[1].(*models.Ansible)
 
@@ -137,7 +139,7 @@ func before_run(c context.Context, e *fsm.Event) {
 		}
 	}
 
-		var playbook = models.Playbook{Name: j.Playbook, ProjectDir: viper.GetString("playbook.baseDir")}
+	var playbook = models.Playbook{Name: j.Playbook, ProjectDir: viper.GetString("playbook.baseDir")}
 	j.Status = models.Running
 	j.Step = "Job"
 	j.Playbook = playbook.Name
@@ -148,25 +150,20 @@ func before_run(c context.Context, e *fsm.Event) {
 		a.Env = outputPluginMap[j.OutputPlugin]
 	}
 	o, err := playbook.Run(a)
-	if e != nil {
+	if err != nil {
 		j.Status = models.Failed
 		j.Output = o
 		j.Error = err.Error()
-		
 	} else {
 		j.Status = models.Completed
 		j.Output = o
 	}
-
-	e.FSM.Event(context.Background(), "cleanup", j)
 }
 
-func after_run(c context.Context, e *fsm.Event) {
+func afterRun(c context.Context, e *fsm.Event) {
 	j := e.Args[0].(*models.AnsibleJob)
 	UpdateJobStatus(j)
-	if e.FSM.Current() == models.Completed {
-		e.FSM.Event(context.Background(), "cleanup", j)
-	}
+	e.FSM.Event(context.Background(), "cleanup", j)
 }
 
 
@@ -190,10 +187,10 @@ func InitFSM() *fsm.FSM {
 			{Name: "cleanup", Src: []string{models.Prepared, models.Completed, models.Failed}, Dst: models.Done},
 		},
 		fsm.Callbacks{
-			"before_prepare": before_prepare,
-			"after_prepare":  after_prepare,
-			"before_run":     before_run,
-			"after_run":      after_run,
+			"before_prepare": beforePrepare,
+			"after_prepare":  afterPrepare,
+			"before_run":     beforeRun,
+			"after_run":      afterRun,
 			"before_cleanup": cleanupJob,
 		},
 	)
@@ -203,10 +200,8 @@ func InitFSM() *fsm.FSM {
 func RunPlaybook(j *models.AnsibleJob, i *models.Inventory, updateJobFunc func(*models.AnsibleJob) error) (*models.AnsibleJob, error) {
 	utils.Log.Info(fmt.Sprintf("job id is %s and inventory id is %s", j.ID.Hex(), i.ID.Hex()))
 
-
 	fsm := InitFSM()
-	utils.Log.Info(fmt.Sprintf("Add localhost %s to inventory", i.Localhost.Name))
-
+	
 	var ansible = models.NewAnsible("playbook")
 
 	go func ()  {
