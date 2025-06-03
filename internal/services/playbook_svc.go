@@ -3,12 +3,14 @@ package services
 import (
 	"ansible-runner/internal/models"
 	"ansible-runner/internal/utils"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/looplab/fsm"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
@@ -35,14 +37,43 @@ func GetPlaybooks(baseDir string) ([]string, error) {
 
 }
 
-func peparedJob(job *models.AnsibleJob, ansible *models.Ansible)(string, error) {
-	job.Step = "Pre-job"
-	var jobDir = filepath.Join(viper.GetString("job.baseDir"), job.ID.Hex())
+
+// before_prepare is a callback function that runs before the prepare event in the FSM.
+func before_prepare(c context.Context, e *fsm.Event) {
+	j := e.Args[0].(*models.AnsibleJob)
+	i := e.Args[1].(*models.Inventory)
+	a := e.Args[2].(*models.Ansible)
+	i.AddLocalhost()
+	var b = viper.GetString("job.baseDir")
+	var jobDir = filepath.Join(b, j.ID.Hex())
+	j.StartTime = time.Now()
+	j.Step = "Pre-job"
+		// create a directory for the job as basis
+	if err := os.MkdirAll(jobDir, os.ModePerm); err != nil {
+		utils.Log.Error(err.Error())
+		j.Status = models.Failed
+		return
+	}
+
+	// create inventory file for job
+	var inventoryFile = filepath.Join(jobDir, "hosts.yml")
+	if err := i.ToYaml(inventoryFile); err != nil {
+		utils.Log.Error(err.Error())
+		j.Status = models.Failed
+		e.FSM.Event(context.Background(), "cleanup", j)
+		return
+	}
+	a.Args = append(a.Args, fmt.Sprintf("--inventory-file=%s", inventoryFile))
+
+	
 	var vaultURL = viper.GetString("vault.uri")
 	vaultToken, err := utils.Decrypt(viper.GetString("vault.token"))
 	
 	if err != nil {
-		return "Decrypt vault token failed", err
+		utils.Log.Error(err.Error())
+		j.Status = models.Failed
+		e.FSM.Event(context.Background(), "cleanup", j)
+		return
 	}
 
 	// create a yaml file extra-vars.yaml for ansible
@@ -54,9 +85,10 @@ func peparedJob(job *models.AnsibleJob, ansible *models.Ansible)(string, error) 
 	}
 	file, err := os.Create(extraVarsFile)
 	if err != nil {
-		job.Status = models.Failed
-		job.Error = err.Error()
-		return "", err
+		utils.Log.Error(err.Error())
+		j.Status = models.Failed
+		e.FSM.Event(context.Background(), "cleanup", j)
+		return
 	}
 	defer file.Close()
 	
@@ -64,120 +96,122 @@ func peparedJob(job *models.AnsibleJob, ansible *models.Ansible)(string, error) 
 	encoder.SetIndent(2)
 	err = encoder.Encode(extraVarsData)
 	if err != nil {
-		job.Status = models.Failed
-		job.Error = err.Error()
-		return "", err
+		utils.Log.Error(err.Error())
+		j.Status = models.Failed
+		e.FSM.Event(context.Background(), "cleanup", j)
+		return 
 	}
-
-	ansible.Args = append(ansible.Args, fmt.Sprintf("--extra-vars=@%s", extraVarsFile))
+	a.Args = append(a.Args, fmt.Sprintf("--extra-vars=@%s", extraVarsFile))
+	j.Status = models.Preparing
 
 	var preJob = models.Playbook{Name: "pre_job_run.yml", ProjectDir: viper.GetString("playbook.baseDir")}
-	job.Status = models.Preparing
-	job.Step = "Pre-job"
-	o, e := preJob.Run(ansible)
-	if e != nil {
-		job.Status = models.Failed
-		job.Error = e.Error()
-		return o, e
-	} 
-	job.Status = models.Prepared
-	return o, nil
+	if _, err := preJob.Run(a); err != nil {
+		utils.Log.Error(fmt.Sprintf("Pre-job run failed: %s", err.Error()))
+		j.Status = models.Failed
+		e.FSM.Event(context.Background(), "cleanup", j)
+		return 
+	}
 	
-	
+	j.Status = models.Prepared
 }
 
-func doJob(job *models.AnsibleJob, ansible *models.Ansible)(string, error) {
+func after_prepare(c context.Context, e *fsm.Event) {
+	j := e.Args[0].(*models.AnsibleJob)
+	a := e.Args[2].(*models.Ansible)
+	
+	UpdateJobStatus(j)
+	if e.FSM.Current() == models.Prepared {
+		e.FSM.Event(context.Background(), "run", j, a)
+	}
+}
+
+func before_run(c context.Context, e *fsm.Event) {
+	j := e.Args[0].(*models.AnsibleJob)
+	a := e.Args[1].(*models.Ansible)
+
 	//reset extra vars, remove --extra-vars from ansible.Args
-	for i, arg := range ansible.Args {
+	for i, arg := range a.Args {
 		if strings.HasPrefix(arg, "--extra-vars=") {
-			ansible.Args = append(ansible.Args[:i], ansible.Args[i+1:]...)
+			a.Args = append(a.Args[:i], a.Args[i+1:]...)
 			break
 		}
 	}
-	var playbook = models.Playbook{Name: job.Playbook, ProjectDir: viper.GetString("playbook.baseDir")}
-	job.Status = models.Running
-	job.Step = "Job"
-	job.Playbook = playbook.Name
 
-	var signedCert = filepath.Join(viper.GetString("job.baseDir"), job.ID.Hex(), "p4s_signed_cert")
-	ansible.Args = append(ansible.Args, fmt.Sprintf("--private-key=%s", signedCert))
-	if len(job.OutputPlugin) > 0 {
-		ansible.Env = outputPluginMap[job.OutputPlugin]
+		var playbook = models.Playbook{Name: j.Playbook, ProjectDir: viper.GetString("playbook.baseDir")}
+	j.Status = models.Running
+	j.Step = "Job"
+	j.Playbook = playbook.Name
+
+	var signedCert = filepath.Join(viper.GetString("job.baseDir"), j.ID.Hex(), "p4s_signed_cert")
+	a.Args = append(a.Args, fmt.Sprintf("--private-key=%s", signedCert))
+	if len(j.OutputPlugin) > 0 {
+		a.Env = outputPluginMap[j.OutputPlugin]
 	}
-	o, e := playbook.Run(ansible)
+	o, err := playbook.Run(a)
 	if e != nil {
-		job.Status = models.Failed
-		job.Output = o
-		job.Error = e.Error()
-		return o, e
-	} 
-	job.Status = models.Completed
-	job.Output = o
-	return o, nil
+		j.Status = models.Failed
+		j.Output = o
+		j.Error = err.Error()
+		
+	} else {
+		j.Status = models.Completed
+		j.Output = o
+	}
+
+	e.FSM.Event(context.Background(), "cleanup", j)
 }
 
-func jobHandler(c chan *models.AnsibleJob, ansible *models.Ansible, updateStatusCallback func (*models.AnsibleJob) error) {	
-	outloop:
-	for{
-		select {
-		case  job := <- c:
-			utils.Log.Info(fmt.Sprintf("Status %s is arrived", job.Status))
-			if job.Status == models.Scheduled {
-				if output, err := peparedJob(job, ansible); err == nil {
-					utils.Log.Info(fmt.Sprintf("Pre-job run is ok and output %s", output))
-				} 
-				utils.Log.Info("pre-job is done and callback to update job status")
-				updateStatusCallback(job)
-				c <- job
-			} else if job.Status == models.Prepared {
-				if output, err := doJob(job, ansible); err == nil {
-					utils.Log.Info(fmt.Sprintf("Job run is ok and output %s", output))
-				} 
-				utils.Log.Info("job is done and callback to update job status")
-				updateStatusCallback(job)
-				c <- job
-			} else {
-                job.EndTime = time.Now()
-				utils.Log.Info("update end time of job and callback to update job status")
-                updateStatusCallback(job)
-				// Run Clean up job
-				if err := os.RemoveAll(filepath.Join(viper.GetString("job.baseDir"), job.ID.Hex())); err != nil {
-					utils.Log.Error(err.Error())
-				}
-				break outloop
-			}
-            
-		}
+func after_run(c context.Context, e *fsm.Event) {
+	j := e.Args[0].(*models.AnsibleJob)
+	UpdateJobStatus(j)
+	if e.FSM.Current() == models.Completed {
+		e.FSM.Event(context.Background(), "cleanup", j)
 	}
+}
+
+
+func cleanupJob(c context.Context, e *fsm.Event) {
+	j := e.Args[0].(*models.AnsibleJob)
+
+	if err := os.RemoveAll(filepath.Join(viper.GetString("job.baseDir"), j.ID.Hex())); err != nil {
+		utils.Log.Error(err.Error())
+	}
+}
+	
+
+// InitFSM initializes the finite state machine (FSM) for AnsibleJob.
+func InitFSM() *fsm.FSM {
+	// Initialize the FSM for AnsibleJob
+	return fsm.NewFSM(
+		models.Scheduled,
+		fsm.Events{
+			{Name: "prepare", Src: []string{models.Scheduled}, Dst: models.Prepared},
+			{Name: "run", Src: []string{models.Prepared}, Dst: models.Completed},
+			{Name: "cleanup", Src: []string{models.Prepared, models.Completed, models.Failed}, Dst: models.Done},
+		},
+		fsm.Callbacks{
+			"before_prepare": before_prepare,
+			"after_prepare":  after_prepare,
+			"before_run":     before_run,
+			"after_run":      after_run,
+			"before_cleanup": cleanupJob,
+		},
+	)
 }
 
 // RunPlaybook launches the specified playbook.
 func RunPlaybook(j *models.AnsibleJob, i *models.Inventory, updateJobFunc func(*models.AnsibleJob) error) (*models.AnsibleJob, error) {
 	utils.Log.Info(fmt.Sprintf("job id is %s and inventory id is %s", j.ID.Hex(), i.ID.Hex()))
-	
-	j.StartTime = time.Now()
-	i.AddLocalhost()
+
+
+	fsm := InitFSM()
 	utils.Log.Info(fmt.Sprintf("Add localhost %s to inventory", i.Localhost.Name))
 
-	var b = viper.GetString("job.baseDir")	
-
-	// create a directory for the job as basis
-	if err := os.MkdirAll(filepath.Join(b, j.ID.Hex()), os.ModePerm); err != nil {
-		utils.Log.Error(err.Error())
-		return nil, err
-	}
-
-	// create inventory file for job
-	var inventoryFile = filepath.Join(b, j.ID.Hex(), "hosts.yml")
-	if err := i.ToYaml(inventoryFile); err != nil {
-		return nil, err
-	}
-
 	var ansible = models.NewAnsible("playbook")
-	ansible.Args = append(ansible.Args, fmt.Sprintf("--inventory-file=%s", inventoryFile))
-	done := make(chan *models.AnsibleJob, 1)
-	done <- j
-	go jobHandler(done, ansible, updateJobFunc)
+
+	go func ()  {
+		fsm.Event(context.Background(),"prepare", j, i, ansible)
+	}()
 
 	return j, nil
 }

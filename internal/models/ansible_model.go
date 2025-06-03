@@ -51,6 +51,7 @@ const (
 	Running   = "running"
 	Completed = "completed"
 	Failed    = "failed"
+	Done      = "done"
 )
 
 // enum for output plugin
