@@ -5,6 +5,7 @@ metadata:
   namespace: ansible-runner
 data:
   mongodb_init_db.js: |
+    use ansiblerunner;
     db.createUser(
       {
         user: "ansiblerunner",
