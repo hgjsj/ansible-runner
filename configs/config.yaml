@@ -5,7 +5,7 @@ server:
 playbook:
   baseDir: "/opt/ansible-sid-operator"
 ansible:
-  baseDir: "/opt/stackstorm/virtualenvs/ansible/bin"
+  baseDir: "/usr/bin"
   playbook: "ansible-playbook"
   vault: "ansible-vault"
   command: "ansible"
@@ -34,5 +34,5 @@ ldap:
   baseDN: "OU=Employees,OU=Accounts,DC=sec,DC=entsvcs,DC=com"
   requiredGroup: "CN=TEAM_INT_PE-ESO4SAP"
 vault:
-  uri: "https://pln-n1-p4sauto3.env01.mcloud.entsvcs.net:8200"
-  token: 02664778dce3e35a1d67452bcfef0c041e04febff29abe7f5a79
+  uri: "https://205.239.15.9:30820"
+  token: 193e010ed2d4cd393353710ee7f137653b579ed901df0404fe82417b9416aec86e313f4c5e59bcb3a7c725a922fbc27d83470c85664c1c36df751634bd9a49e2eee1c737afeff8db64374eee1f4969169121897f5f3edc414bdebecbe48349

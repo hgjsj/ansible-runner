@@ -5,7 +5,7 @@ import (
 )
 
 func TestEncrypt(t *testing.T) {
-	plainText := "p4sautomation"
+	plainText := "hvs.CAESIMmrYsVW4yITTS1yLkhkbIlgmVa4oJvxLz15CBWFEA_fGh4KHGh2cy5OYWE0eEVSYkI3alZIeXJES2JDSEFQOFY"
 
 	cipherText, err := Encrypt(plainText)
 	if err != nil {
@@ -15,7 +15,7 @@ func TestEncrypt(t *testing.T) {
 }
 
 func TestDecrypt(t *testing.T) {
-	plainText := "p4sautomation"
+	plainText := "hvs.CAESIMmrYsVW4yITTS1yLkhkbIlgmVa4oJvxLz15CBWFEA_fGh4KHGh2cy5OYWE0eEVSYkI3alZIeXJES2JDSEFQOFY"
 
 	cipherText, err := Encrypt(plainText)
 	if err != nil {
