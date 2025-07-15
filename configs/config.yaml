@@ -13,8 +13,7 @@ ansible:
     - "-b"
     - "--become-user=root"
     - "--become-method=sudo"
-    - "--user=p4sautomation"
-    - "--vault-password-file=vault-secret"
+    - "--user=cloudauto"
 job:
   baseDir: "/var/vault/key_pairs"
 mongodb:

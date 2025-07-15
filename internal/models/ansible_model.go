@@ -68,7 +68,7 @@ type AnsibleRunner interface {
 // Host represents an Ansible host.
 type Host struct {
 	Name string            `json:"name,omitempty"`
-	Vars map[string]string `json:"vars,omitempty"`
+	Vars map[string]any `json:"vars,omitempty"`
 }
 
 // Group represents an Ansible group.
@@ -184,7 +184,7 @@ func NewInventory(localhost bool) *Inventory {
 func (i *Inventory) AddLocalhost() {
 	h := new(Host)
 	h.Name = "localhost"
-	h.Vars = map[string]string{"ansible_connection": "local"}
+	h.Vars = map[string]any{"ansible_connection": "local"}
 	i.Localhost = h
 }
 
