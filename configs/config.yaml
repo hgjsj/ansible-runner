@@ -3,7 +3,7 @@ log:
 server:
   port: 8080
 playbook:
-  baseDir: "/opt/ansible-sid-operator"
+  baseDir: "/opt/pcm-p4s-playbook"
 ansible:
   baseDir: "/usr/bin"
   playbook: "ansible-playbook"
@@ -35,4 +35,4 @@ ldap:
   requiredGroup: "CN=TEAM_INT_PE-ESO4SAP"
 vault:
   uri: "https://205.239.15.9:30820"
-  token: 193e010ed2d4cd393353710ee7f137653b579ed901df0404fe82417b9416aec86e313f4c5e59bcb3a7c725a922fbc27d83470c85664c1c36df751634bd9a49e2eee1c737afeff8db64374eee1f4969169121897f5f3edc414bdebecbe48349
+  token: 193e010ed2d4cd3933597d12ecf71250a22a62cb7913099e868d56eb4afb3e9007def307b91980d596ddd2590eb8c3b4c81bc3788a4262510ff0950083888d0ac833c37bb0587a7d0dedbee8462b24657b3059677bcab9a09a6adedaba307e

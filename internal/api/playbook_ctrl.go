@@ -19,7 +19,7 @@ type LaunchRequest struct {
 	OutputPlugin string `json:"outputplugin,omitempty"`
 }
 
-var playbookList []string = []string{"p4s_account_validate.yml"}
+var playbookList []string = []string{"post_install.yml"}
 
 // ListPlaybooks handles the listing of playbooks.
 func ListPlaybooks(c *gin.Context) {
