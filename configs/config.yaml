@@ -36,3 +36,9 @@ ldap:
 vault:
   uri: "https://pln-n1-p4sauto3.env01.mcloud.entsvcs.net:8200"
   token: 02664778dce3e35a1d67452bcfef0c041e04febff29abe7f5a79
+postgresql:
+  host: "127.0.0.1"
+  port: 5432
+  database: "ansiblerunner"
+  user: "ansiblerunner"
+  password: 017c0141e4e1e7071b6a7513d0

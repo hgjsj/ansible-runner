@@ -204,3 +204,4 @@ func (p *Playbook) Run(a *Ansible) (string, error) {
 	}
 	return output, nil
 }
+
