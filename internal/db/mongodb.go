@@ -45,92 +45,91 @@ type MongoDB struct {
 var MongoClient *MongoDB
 
 func newMongoClient() *MongoDB {
-	if MongoClient != nil {
-		return MongoClient
-	}
-	MongoClient = new(MongoDB)
-	MongoClient.c = context.Background()
-	var err error
-	uri := viper.GetString("mongodb.uri")
-	MongoClient.db = viper.GetString("mongodb.database")
-	MongoClient.JobCollection = viper.GetString("mongodb.jobCollection")
-	MongoClient.InventoryCollection = viper.GetString("mongodb.inventoryCollection")
+	once.Do(func() {
+		MongoClient = new(MongoDB)
+		MongoClient.c = context.Background()
+		var err error
+		uri := viper.GetString("mongodb.uri")
+		MongoClient.db = viper.GetString("mongodb.database")
+		MongoClient.JobCollection = viper.GetString("mongodb.jobCollection")
+		MongoClient.InventoryCollection = viper.GetString("mongodb.inventoryCollection")
 
-	username := viper.GetString("mongodb.user")
-	password := viper.GetString("mongodb.password")
-	password, err = utils.Decrypt(password)
-	if err != nil {
-		utils.Log.Error(err.Error())
-		panic(err)
-	}
-
-	credential := options.Credential{
-		Username:      username,
-		Password:      password,
-		AuthMechanism: "SCRAM-SHA-256",
-		AuthSource:    MongoClient.db,
-	}
-	clientOptions := options.Client().ApplyURI(uri).SetAuth(credential)
-
-	MongoClient.mongoClient, err = mongo.Connect(MongoClient.c, clientOptions)
-	if err != nil {
-		utils.Log.Error(err.Error())
-		panic(err)
-	}
-
-	databaseNames, err := MongoClient.mongoClient.ListDatabaseNames(MongoClient.c, bson.M{})
-	if err != nil {
-		utils.Log.Error(err.Error())
-		panic(err)
-	}
-
-	dbExists := false
-	for _, dbName := range databaseNames {
-		if dbName == MongoClient.db {
-			dbExists = true
-			break
-		}
-	}
-
-	if !dbExists {
-		err = MongoClient.mongoClient.Database(MongoClient.db).CreateCollection(MongoClient.c, MongoClient.JobCollection)
+		username := viper.GetString("mongodb.user")
+		password := viper.GetString("mongodb.password")
+		password, err = utils.Decrypt(password)
 		if err != nil {
 			utils.Log.Error(err.Error())
 			panic(err)
 		}
-	}
-	collectionNames, err := MongoClient.mongoClient.Database(MongoClient.db).ListCollectionNames(MongoClient.c, bson.M{})
-	if err != nil {
-		utils.Log.Error(err.Error())
-		panic(err)
-	}
 
-	jobCollectionExists := false
-	inventoryCollectionExists := false
-	for _, collName := range collectionNames {
-		if collName == MongoClient.JobCollection {
-			jobCollectionExists = true
+		credential := options.Credential{
+			Username:      username,
+			Password:      password,
+			AuthMechanism: "SCRAM-SHA-256",
+			AuthSource:    MongoClient.db,
 		}
-		if collName == MongoClient.InventoryCollection {
-			inventoryCollectionExists = true
-		}
-	}
+		clientOptions := options.Client().ApplyURI(uri).SetAuth(credential)
 
-	if !jobCollectionExists {
-		err = MongoClient.mongoClient.Database(MongoClient.db).CreateCollection(MongoClient.c, MongoClient.JobCollection)
+		MongoClient.mongoClient, err = mongo.Connect(MongoClient.c, clientOptions)
 		if err != nil {
 			utils.Log.Error(err.Error())
 			panic(err)
 		}
-	}
 
-	if !inventoryCollectionExists {
-		err = MongoClient.mongoClient.Database(MongoClient.db).CreateCollection(MongoClient.c, MongoClient.InventoryCollection)
+		databaseNames, err := MongoClient.mongoClient.ListDatabaseNames(MongoClient.c, bson.M{})
 		if err != nil {
 			utils.Log.Error(err.Error())
 			panic(err)
 		}
-	}
+
+		dbExists := false
+		for _, dbName := range databaseNames {
+			if dbName == MongoClient.db {
+				dbExists = true
+				break
+			}
+		}
+
+		if !dbExists {
+			err = MongoClient.mongoClient.Database(MongoClient.db).CreateCollection(MongoClient.c, MongoClient.JobCollection)
+			if err != nil {
+				utils.Log.Error(err.Error())
+				panic(err)
+			}
+		}
+		collectionNames, err := MongoClient.mongoClient.Database(MongoClient.db).ListCollectionNames(MongoClient.c, bson.M{})
+		if err != nil {
+			utils.Log.Error(err.Error())
+			panic(err)
+		}
+
+		jobCollectionExists := false
+		inventoryCollectionExists := false
+		for _, collName := range collectionNames {
+			if collName == MongoClient.JobCollection {
+				jobCollectionExists = true
+			}
+			if collName == MongoClient.InventoryCollection {
+				inventoryCollectionExists = true
+			}
+		}
+
+		if !jobCollectionExists {
+			err = MongoClient.mongoClient.Database(MongoClient.db).CreateCollection(MongoClient.c, MongoClient.JobCollection)
+			if err != nil {
+				utils.Log.Error(err.Error())
+				panic(err)
+			}
+		}
+
+		if !inventoryCollectionExists {
+			err = MongoClient.mongoClient.Database(MongoClient.db).CreateCollection(MongoClient.c, MongoClient.InventoryCollection)
+			if err != nil {
+				utils.Log.Error(err.Error())
+				panic(err)
+			}
+		}
+	})
 
 	return MongoClient
 }

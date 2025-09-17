@@ -4,6 +4,7 @@ import (
 	"ansible-runner/internal/models"
 	"ansible-runner/internal/utils"
 	"github.com/spf13/viper"
+	"sync"
 )
 
 type DBService interface {
@@ -18,6 +19,7 @@ type DBService interface {
 	CloseService()
 }
 
+var once sync.Once
 
 func GetDBClient() DBService {
 	if viper.IsSet("postgresql"){

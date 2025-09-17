@@ -7,10 +7,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"sync"
 	"time"
-	"gorm.io/driver/postgres"
+
 	"github.com/spf13/viper"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm/clause"
 
 	"gorm.io/gorm"
 )
@@ -21,25 +22,25 @@ type PostgreSQL struct {
 }
 
 type AnsibleJobSQL struct {
-	ID           uint64 `gorm:"primaryKey;autoIncrement"`
-	Playbook     string `gorm:"type:text"`
-	Status       string `gorm:"type:text"`
-	Output       string `gorm:"type:text"`
-	Error        string `gorm:"type:text"`
-	Step         string `gorm:"type:text"`
+	ID           uint64    `gorm:"primaryKey;autoIncrement"`
+	Playbook     string    `gorm:"type:text"`
+	Status       string    `gorm:"type:text"`
+	Output       string    `gorm:"type:text"`
+	Error        string    `gorm:"type:text"`
+	Step         string    `gorm:"type:text"`
 	StartTime    time.Time `gorm:"type:timestamptz"`
 	EndTime      time.Time `gorm:"type:timestamptz"`
-	InventoryID  uint64 `gorm:"type:bigint"`
-	OutputPlugin string	`gorm:"type:text"`
+	InventoryID  uint64    `gorm:"type:bigint"`
+	OutputPlugin string    `gorm:"type:text"`
 }
 
 type inventorySQL struct {
 	ID       uint64 `gorm:"primaryKey;autoIncrement"`
-	Name     string	`gorm:"type:text;uniqueIndex"`
+	Name     string `gorm:"type:text;uniqueIndex"`
 	Property string `gorm:"type:jsonb"`
 }
 
-var once sync.Once
+
 var PostgreSQLClient *PostgreSQL
 
 // NewPostgreSQL creates a new PostgreSQL configuration.impletemet with singleton pattern
@@ -72,7 +73,7 @@ func newPostgreSQL() *PostgreSQL {
 		//  	panic(err)
 		// }
 		PostgreSQLClient = &PostgreSQL{db: db}
-		
+
 	})
 
 	return PostgreSQLClient
@@ -89,7 +90,9 @@ func (p *PostgreSQL) get(ctx context.Context, obj any) error {
 
 func (p *PostgreSQL) create(ctx context.Context, data any) error {
 	// insert a record to the table
-	res := p.db.WithContext(ctx).Create(data)
+	res := p.db.WithContext(ctx).Clauses(clause.OnConflict{
+		UpdateAll: true,
+	}).Create(data)
 	if res.Error != nil {
 		utils.Log.Error(res.Error.Error())
 		return res.Error
@@ -166,6 +169,13 @@ func (p *PostgreSQL) CreateInventory(i *models.Inventory) error {
 	inv := inventorySQL{
 		Name:     i.Name,
 		Property: string(property),
+	}
+	if i.ID != "" {
+		inv.ID, err = strconv.ParseUint(i.ID, 10, 64)
+		if err != nil {
+			utils.Log.Error(err.Error())
+			return err
+		}
 	}
 	if err := p.create(ctx, &inv); err != nil {
 		utils.Log.Error(err.Error())
@@ -270,6 +280,14 @@ func (p *PostgreSQL) CreateAnsibleJob(j *models.AnsibleJob) error {
 		InventoryID:  n,
 		OutputPlugin: j.OutputPlugin,
 	}
+	if j.ID != "" {
+		jSQL.ID, err = strconv.ParseUint(j.ID, 10, 64)
+		if err != nil {
+			utils.Log.Error(err.Error())
+			return err
+		}
+	}
+
 	if err := p.create(ctx, jSQL); err != nil {
 		utils.Log.Error(err.Error())
 		return err
@@ -286,7 +304,7 @@ func (p *PostgreSQL) DeleteAnsibleJob(id string) error {
 		utils.Log.Error(err.Error())
 		return err
 	}
-	
+
 	jSQL := AnsibleJobSQL{ID: n}
 	if err := p.delete(ctx, &jSQL); err != nil {
 		utils.Log.Error(err.Error())
@@ -318,7 +336,7 @@ func (p *PostgreSQL) ListAnsibleJob() ([]models.AnsibleJob, error) {
 			OutputPlugin: jSQL.OutputPlugin,
 		}
 		jobs = append(jobs, j)
-	}	
+	}
 	return jobs, nil
 }
 
