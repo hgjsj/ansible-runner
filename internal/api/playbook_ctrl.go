@@ -66,7 +66,7 @@ func LaunchPlaybook(c *gin.Context) {
 	}
 	
 	// save ansible job to db
-	aj := models.NewAnsibleJob(true)
+	aj := models.NewAnsibleJob()
 	aj.Playbook = requestBody.Playbook
 	aj.OutputPlugin = requestBody.OutputPlugin
 	aj.Status = models.Scheduled
@@ -88,6 +88,6 @@ func LaunchPlaybook(c *gin.Context) {
 	}
 
 	utils.Log.Info("Run playbook is ok and response")
-	var responseJob = JobResponse{ID: aj.ID.Hex(), Status: aj.Status}
+	var responseJob = JobResponse{ID: aj.ID, Status: aj.Status}
 	c.JSON(http.StatusCreated, responseJob)
 }

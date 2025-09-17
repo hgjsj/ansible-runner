@@ -1,7 +1,6 @@
 package api
 
 import (
-	"ansible-runner/internal/db"
 	"ansible-runner/internal/services"
 	"ansible-runner/internal/tasks"
 	"ansible-runner/internal/utils"
@@ -33,7 +32,7 @@ func GetJob(c *gin.Context) {
 		return
 	}
 	utils.Log.Info(fmt.Sprintf("Get job %s and response", job.ID))
-	var responseJob = JobResponse{ID: job.ID.Hex(), Playbook: job.Playbook, Status: job.Status,
+	var responseJob = JobResponse{ID: job.ID, Playbook: job.Playbook, Status: job.Status,
 		Step: job.Step, Output: job.Output, Err: job.Error, StartAt: job.StartTime.Format(time.RFC3339)}
 	if job.EndTime.IsZero() == false {
 		responseJob.EndAt = job.EndTime.Format(time.RFC3339)
@@ -44,7 +43,7 @@ func GetJob(c *gin.Context) {
 
 // ListJobs handles the request to list jobs by job name.
 func ListJobs(c *gin.Context) {
-	j, err := services.ListJobs(db.NewMongoClient().JobCollection)
+	j, err := services.ListJobs()
 
 	if err != nil {
 		utils.Log.Error(err.Error())
@@ -54,7 +53,7 @@ func ListJobs(c *gin.Context) {
 	jobList := make([]JobResponse, 0, len(j))
 
 	for _, job := range j {
-		jobList = append(jobList, JobResponse{ID: job.ID.Hex(), Playbook: job.Playbook, Status: job.Status})
+		jobList = append(jobList, JobResponse{ID: job.ID, Playbook: job.Playbook, Status: job.Status})
 	}
 	utils.Log.Info("List inventory is ok and response")
 	c.JSON(http.StatusOK, jobList)
@@ -82,10 +81,10 @@ func RelaunchJob(c *gin.Context) {
 	}
 
 	// Check Inventory is exists
-	inventory, err := services.GetInventory(job.InventoryID.Hex())
+	inventory, err := services.GetInventory(job.ID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprintf("Inventory %s is not exists with error %s", job.InventoryID.Hex(), err.Error()),
+			"error": fmt.Sprintf("Inventory %s is not exists with error %s", job.ID, err.Error()),
 		})
 		return
 	}
@@ -105,5 +104,5 @@ func RelaunchJob(c *gin.Context) {
 		return
 	}
 	
-	c.JSON(http.StatusOK, gin.H{"id": job.ID.Hex()})
+	c.JSON(http.StatusOK, gin.H{"id": job.ID})
 }

@@ -91,7 +91,7 @@ func HandleAnsibleJobStatusTask(ctx context.Context, t *asynq.Task) error {
 		if err != nil {
 			utils.Log.Error(err.Error())
 		}
-		utils.Log.Info(fmt.Sprintf("Update job %s status done", js.ID.Hex()))
+		utils.Log.Info(fmt.Sprintf("Update job %s status done", js.ID))
 	}()
 
 	return nil

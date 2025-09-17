@@ -6,9 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
 	"github.com/spf13/viper"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"gopkg.in/yaml.v3"
 )
 
@@ -29,9 +27,13 @@ func NewAnsible(exe string) *Ansible {
 	return &Ansible{Cmd: cmd, Args: viper.GetStringSlice("ansible.options")}
 }
 
+type Model interface {
+	GetID() string
+}
+
 // AnsibleJob represents a job that runs a playbook.
 type AnsibleJob struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	ID        string             `json:"id,omitempty"`
 	Playbook  string             `json:"playbook,omitempty"`
 	Status    string             `json:"status,omitempty"`
 	Output    string             `json:"output,omitempty"`
@@ -39,8 +41,8 @@ type AnsibleJob struct {
 	Step      string             `json:"step,omitempty"`
 	StartTime time.Time          `json:"start_time,omitempty"`
 	EndTime   time.Time          `json:"end_time,omitempty"`
-	InventoryID primitive.ObjectID `bson:"inventory_id,omitempty" json:"inventory_id,omitempty"`
-	OutputPlugin string `json:"output_plugin,omitempty"`
+	InventoryID string           `json:"inventory_id,omitempty"`
+	OutputPlugin string          `json:"output_plugin,omitempty"`
 }
 
 // enum for job status
@@ -80,11 +82,12 @@ type Group struct {
 
 // Inventory represents an Ansible inventory.
 type Inventory struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	ID        string             `json:"id,omitempty"`
 	Name      string             `json:"name,omitempty"`
 	Localhost *Host              `json:"localhost,omitempty"`
 	Groups    []Group            `json:"groups,omitempty"`
 }
+
 
 // ToYaml adds a host to the inventory.
 func (h *Host) ToYaml() map[string]any {
@@ -152,15 +155,12 @@ func (i *Inventory) ToYaml(inventoryFile string) error {
 	return nil
 }
 
-// NewInventory creates a new Ansible job.
-func NewAnsibleJob(initialID bool) *AnsibleJob {
+// NewAnsibleJob creates a new Ansible job.
+func NewAnsibleJob() *AnsibleJob {
 	j := new(AnsibleJob)
-	if initialID {
-		j.ID = primitive.NewObjectID()
-	}
-
 	return j
 }
+
 
 func (j *AnsibleJob) Reset() {
 	j.Status = Scheduled
@@ -174,12 +174,13 @@ func (j *AnsibleJob) Reset() {
 // NewInventory creates a new Ansible inventory.
 func NewInventory(localhost bool) *Inventory {
 	i := new(Inventory)
-	i.ID = primitive.NewObjectID()
 	if localhost {
 		i.AddLocalhost()
 	}
 	return i
 }
+
+
 
 func (i *Inventory) AddLocalhost() {
 	h := new(Host)

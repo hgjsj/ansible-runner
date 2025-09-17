@@ -1,7 +1,6 @@
 package api
 
 import (
-	"ansible-runner/internal/db"
 	"ansible-runner/internal/models"
 	"ansible-runner/internal/services"
 	"ansible-runner/internal/utils"
@@ -12,7 +11,7 @@ import (
 )
 
 func ListInventory(c *gin.Context) {
-	i, e := services.ListInventory(db.NewMongoClient().InventoryCollection)
+	i, e := services.ListInventory()
 	if e != nil {
 		utils.Log.Error(e.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": e.Error()})

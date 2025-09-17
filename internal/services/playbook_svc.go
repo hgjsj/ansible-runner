@@ -45,7 +45,7 @@ func beforePrepare(c context.Context, e *fsm.Event) {
 	i.AddLocalhost()
 	utils.Log.Info(fmt.Sprintf("Add localhost %s to inventory", i.Localhost.Name))
 	var b = viper.GetString("job.baseDir")
-	var jobDir = filepath.Join(b, j.ID.Hex())
+	var jobDir = filepath.Join(b, j.ID)
 	j.StartTime = time.Now()
 	j.Step = "Pre-job"
 		// create a directory for the job as basis
@@ -144,7 +144,7 @@ func beforeRun(c context.Context, e *fsm.Event) {
 	j.Step = "Job"
 	j.Playbook = playbook.Name
 
-	var signedCert = filepath.Join(viper.GetString("job.baseDir"), j.ID.Hex(), "p4s_signed_cert")
+	var signedCert = filepath.Join(viper.GetString("job.baseDir"), j.ID, "p4s_signed_cert")
 	a.Args = append(a.Args, fmt.Sprintf("--private-key=%s", signedCert))
 	if len(j.OutputPlugin) > 0 {
 		a.Env = outputPluginMap[j.OutputPlugin]
@@ -170,7 +170,7 @@ func afterRun(c context.Context, e *fsm.Event) {
 func cleanupJob(c context.Context, e *fsm.Event) {
 	j := e.Args[0].(*models.AnsibleJob)
 
-	if err := os.RemoveAll(filepath.Join(viper.GetString("job.baseDir"), j.ID.Hex())); err != nil {
+	if err := os.RemoveAll(filepath.Join(viper.GetString("job.baseDir"), j.ID)); err != nil {
 		utils.Log.Error(err.Error())
 	}
 }
@@ -198,7 +198,7 @@ func InitFSM() *fsm.FSM {
 
 // RunPlaybook launches the specified playbook.
 func RunPlaybook(j *models.AnsibleJob, i *models.Inventory, updateJobFunc func(*models.AnsibleJob) error) (*models.AnsibleJob, error) {
-	utils.Log.Info(fmt.Sprintf("job id is %s and inventory id is %s", j.ID.Hex(), i.ID.Hex()))
+	utils.Log.Info(fmt.Sprintf("job id is %s and inventory id is %s", j.ID, i.ID))
 
 	fsm := InitFSM()
 	

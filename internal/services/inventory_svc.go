@@ -5,14 +5,12 @@ import (
 	"ansible-runner/internal/models"
 	"ansible-runner/internal/utils"
 	"fmt"
-
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // GetInventory retrieves an inventory by its ID.
 func GetInventory(id string) (*models.Inventory, error) {
-	i, err := db.Retrieve[models.Inventory](db.NewMongoClient(), db.NewMongoClient().InventoryCollection, id)
+	i, err := db.GetDBClient().GetInventory(id)
 	if err != nil {
 		return nil, fmt.Errorf("inventory %s not found", id)
 	} 
@@ -21,8 +19,8 @@ func GetInventory(id string) (*models.Inventory, error) {
 }
 
 // ListInventory retrieves all inventories.
-func ListInventory(collection string) ([]models.Inventory, error) {
-	res, err := db.ListDocuments[models.Inventory](db.NewMongoClient(), collection, bson.D{{Key: "_id", Value: 1}, {Key: "name", Value: 1}})
+func ListInventory() ([]models.Inventory, error) {
+	res, err := db.GetDBClient().ListInventory()
 	if err != nil {
 		if err == mongo.ErrEmptySlice{
 			return make([]models.Inventory, 0), nil
@@ -34,21 +32,21 @@ func ListInventory(collection string) ([]models.Inventory, error) {
 
 // CreateInventory creates a new inventory.
 func CreateInventory(i *models.Inventory) (string, error) {
-	err := db.NewMongoClient().Persist(db.NewMongoClient().InventoryCollection, i.ID.Hex(), i)
+	err := db.GetDBClient().CreateInventory(i)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		return "", err
 	}
 
-	return i.ID.Hex(), nil
+	return i.ID, nil
 }
 
 // DeleteInventory deletes an inventory by its ID.
 func DeleteInventory(id string) error {
 	if id == "all" {
 		//delete all inventories
-		return db.DeleteDocument(db.NewMongoClient(), db.NewMongoClient().InventoryCollection, "")
+		id = ""
 	} 
 	//delete inventory by id
-	return db.DeleteDocument(db.NewMongoClient(), db.NewMongoClient().InventoryCollection, id)
+	return db.GetDBClient().DeleteInventory(id)
 }	

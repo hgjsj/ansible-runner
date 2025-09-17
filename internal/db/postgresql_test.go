@@ -3,9 +3,7 @@ package db
 import (
 	"ansible-runner/internal/models"
 	"ansible-runner/internal/utils"
-	"context"
 	"testing"
-	"time"
 )
 
 func init() {
@@ -14,14 +12,15 @@ func init() {
 }
 
 func TestNewClient(t *testing.T) {
-	NewPostgreSQL()
+	cli := newPostgreSQL()
+	defer cli.CloseService()	
 	t.Logf("new client succesfully successful")
-
+	
 }
 
 func TestCreateInventory(t *testing.T) {
-	cli := NewPostgreSQL()
-
+	cli := newPostgreSQL()
+    defer cli.CloseService()
 	host := models.Host{
 		Name: "db",
 		Vars: map[string]string{
@@ -36,27 +35,24 @@ func TestCreateInventory(t *testing.T) {
 			"sid":    "RL1",
 			"dbtype": "oracle",
 		}}
-	defer cli.Close()
 	inv := models.Inventory{
 		Name:   "pcm-p4s-postinstall",
 		Groups: []models.Group{group},
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
-	defer cancel()
-	if err := cli.CreateInventory(ctx, &inv); err != nil {
+
+	if err := cli.CreateInventory( &inv); err != nil {
 		t.Fatalf("create inventory failed with err %s", err.Error())
 	} else {
-		t.Logf("create inventory %s successful", inv.Name)
+		t.Logf("create inventory %s with ID %s successful", inv.Name, inv.ID)
 	}
 
 }
 
 func TestGetInventory(t *testing.T) {
-	cli := NewPostgreSQL()
-	defer cli.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if i, err := cli.GetInventory(ctx, "3"); err != nil {
+	cli := newPostgreSQL()
+	defer cli.CloseService()
+
+	if i, err := cli.GetInventory( "1"); err != nil {
 		t.Fatalf("get inventory failed with err %s", err.Error())
 	} else {
 		t.Logf("get inventory %s with group name %s successful", i.Name, i.Groups[0].Name)
@@ -64,12 +60,11 @@ func TestGetInventory(t *testing.T) {
 }
 
 func TestListInventory(t *testing.T) {
-	cli := NewPostgreSQL()
-	defer cli.Close()
+	cli := newPostgreSQL()
+	defer cli.CloseService()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if is, err := cli.ListInventory(ctx); err != nil {
+
+	if is, err := cli.ListInventory(); err != nil {
 		t.Fatalf("list inventory failed with err %s", err.Error())
 	} else {
 		for _, inv := range is {
@@ -79,11 +74,10 @@ func TestListInventory(t *testing.T) {
 }
 
 func TestDeleteInventory(t *testing.T) {
-	cli := NewPostgreSQL()
-	defer cli.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := cli.DeleteInventory(ctx, "2"); err != nil {
+	cli := newPostgreSQL()
+	defer cli.CloseService()
+
+	if err := cli.DeleteInventory( "2"); err != nil {
 		t.Fatalf("delete inventory failed with err %s", err.Error())
 	} else {
 		t.Logf("delete inventory successful")
@@ -91,58 +85,51 @@ func TestDeleteInventory(t *testing.T) {
 }
 
 func TestCreateAnsibleJob(t *testing.T) {
-	cli := NewPostgreSQL()
-	defer cli.Close()
+	cli := newPostgreSQL()
+	defer cli.CloseService()
 
 	j := models.AnsibleJob{
-		Playbook: "test.yml",
+		Playbook: "test_new1.yml",
 		Status:   models.Scheduled,
-		//InventoryID:  primitive.NewObjectID(),
+		InventoryID: "2",
 		OutputPlugin: models.TINYJSON,
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := cli.CreateAnsibleJob(ctx, &j); err != nil {
+	if err := cli.CreateAnsibleJob(&j); err != nil {
 		t.Fatalf("create ansible job failed with err %s", err.Error())
 	} else {
-		t.Logf("create ansible job %s successful", j.Playbook)
+		t.Logf("create ansible job %s successful", j.ID)
 	}
 }
 
 func TestGetAnsibleJob(t *testing.T) {
-	cli := NewPostgreSQL()
-	defer cli.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if j, err := cli.GetAnsibleJob(ctx, "1"); err != nil {
+	cli := newPostgreSQL()
+	defer cli.CloseService()
+
+	if j, err := cli.GetAnsibleJob( "1"); err != nil {
 		t.Fatalf("get ansible job failed with err %s", err.Error())
 	} else {
-		t.Logf("get ansible job %s with status %s successful", j.Playbook, j.Status)
+		t.Logf("get ansible job %s with status %s successful", j.ID, j.Status)
 	}
 }
 
 func TestListAnsibleJob(t *testing.T) {
-	cli := NewPostgreSQL()
-	defer cli.Close()
+	cli := newPostgreSQL()
+	defer cli.CloseService()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if js, err := cli.ListAnsibleJob(ctx); err != nil {
+	if js, err := cli.ListAnsibleJob(); err != nil {
 		t.Fatalf("list ansible job failed with err %s", err.Error())
 	} else {
 		for _, j := range js {
-			t.Logf("list ansible job %s with status %s successful", j.Playbook, j.Status)
+			t.Logf("list ansible job %s with status %s successful", j.ID, j.Status)
 		}
 	}
 }
 
 func TestDeleteAnsibleJob(t *testing.T) {
-	cli := NewPostgreSQL()
-	defer cli.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := cli.DeleteAnsibleJob(ctx, "1"); err != nil {
+	cli := newPostgreSQL()
+	defer cli.CloseService()
+	if err := cli.DeleteAnsibleJob( "2"); err != nil {
 		t.Fatalf("delete ansible job failed with err %s", err.Error())
 	} else {
 		t.Logf("delete ansible job successful")

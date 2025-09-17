@@ -53,7 +53,7 @@ func EnqueueJobTask(job *models.AnsibleJob, inventory *models.Inventory) (string
 		return "", err
 	}
 	utils.Log.Info(fmt.Sprintf("Enqueue job task to queue with id %s and state %s", ti.ID, ti.State))
-	return job.ID.Hex(), nil
+	return job.ID, nil
 	
 }
 

@@ -18,7 +18,7 @@ func PostWorkerRun(cmd *cobra.Command, args []string) {
 	utils.Log.Info("Cleanup and shutting down worker...")
 	tasks.Close()
 	tasks.CloseClient()
-	db.MongoClient.Close()
+	db.MongoClient.CloseService()
 	utils.CleanUp()
 }
 
