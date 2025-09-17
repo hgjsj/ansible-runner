@@ -136,12 +136,13 @@ func newMongoClient() *MongoDB {
 }
 
 func (m *MongoDB) persist(collection string, keyFilter string, value any) error {
-	objID, err := primitive.ObjectIDFromHex(keyFilter)
 
+	objID, err := primitive.ObjectIDFromHex(keyFilter)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		return err
 	}
+
 	update := bson.M{
 		"$set": value,
 	}
@@ -188,12 +189,25 @@ func (m *MongoDB) CloseService() {
 }
 
 func (m *MongoDB) CreateInventory(i *models.Inventory) error {
+	var iID primitive.ObjectID
+	var err error
+	if i.ID == "" {
+		iID = primitive.NewObjectID()
+	} else {
+		iID, err = primitive.ObjectIDFromHex(i.ID)
+		if err != nil {
+			utils.Log.Error(err.Error())
+			return err
+		}
+	}
+
 	iMongo := &inventoryMongo{
+		ID:	  iID,
 		Name:    i.Name,
 		Groups:  i.Groups,
 		Localhost: i.Localhost,
 	}
-	if  err := m.persist(m.InventoryCollection, i.ID, iMongo); err != nil {
+	if  err := m.persist(m.InventoryCollection, iMongo.ID.Hex(), iMongo); err != nil {
 		return err
 	}
 	i.ID = iMongo.ID.Hex()
@@ -253,7 +267,25 @@ func (m *MongoDB) ListInventory() ([]models.Inventory, error) {
 }
 
 func (m *MongoDB) CreateAnsibleJob(j *models.AnsibleJob) error {
+	var jID primitive.ObjectID
+	var err error
+	if j.ID == "" {
+		jID = primitive.NewObjectID()
+	} else {
+		jID, err = primitive.ObjectIDFromHex(j.ID)
+		if err != nil {
+			utils.Log.Error(err.Error())
+			return err
+		}
+	}
+
+	invID, err := primitive.ObjectIDFromHex(j.InventoryID)
+	if err != nil {
+		utils.Log.Error(err.Error())
+		return  err
+	}
 	jMongo := &AnsibleJobMongo{
+		ID: 		  jID,
 		Playbook:     j.Playbook,
 		Status:       j.Status,
 		Output:       j.Output,
@@ -262,9 +294,10 @@ func (m *MongoDB) CreateAnsibleJob(j *models.AnsibleJob) error {
 		StartTime:    primitive.NewDateTimeFromTime(j.StartTime),
 		EndTime:      primitive.NewDateTimeFromTime(j.EndTime),
 		OutputPlugin: j.OutputPlugin,
+		InventoryID: invID,
 	}
 
-	if  err := m.persist(m.JobCollection, j.ID, jMongo); err != nil {
+	if  err := m.persist(m.JobCollection, jMongo.ID.Hex(), jMongo); err != nil {
 		return err
 	}
 	j.ID = jMongo.ID.Hex()

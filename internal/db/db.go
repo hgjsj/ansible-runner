@@ -20,11 +20,11 @@ type DBService interface {
 
 
 func GetDBClient() DBService {
-	if viper.GetStringMap("postgresql") != nil {
+	if viper.IsSet("postgresql"){
 		return newPostgreSQL()	
 	}
 
-	if viper.GetStringMap("mongodb") != nil {
+	if viper.IsSet("mongodb")  {
 		return newMongoClient()
 	}
 

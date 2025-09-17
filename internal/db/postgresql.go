@@ -45,11 +45,7 @@ var PostgreSQLClient *PostgreSQL
 // NewPostgreSQL creates a new PostgreSQL configuration.impletemet with singleton pattern
 func newPostgreSQL() *PostgreSQL {
 	once.Do(func() {
-		utils.Log.Info("initialize PostgreSQL client")
-		if viper.GetStringMap("postgresql") == nil {
-			utils.Log.Error("PostgreSQL config not found and quitting")
-			panic("PostgreSQL config not found")
-		}
+		fmt.Print("initialize PostgreSQL client")
 
 		password, err := utils.Decrypt(viper.GetString("postgresql.password"))
 		if err != nil {
@@ -64,7 +60,7 @@ func newPostgreSQL() *PostgreSQL {
 			viper.GetString("postgresql.database"),
 			viper.GetString("postgresql.port"),
 		)
-		utils.Log.Info(fmt.Sprintf("initialize PostgreSQL client with dsn %s", dsn))
+
 		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 		if err != nil {
 			utils.Log.Error(err.Error())

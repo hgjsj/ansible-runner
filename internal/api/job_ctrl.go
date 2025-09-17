@@ -81,7 +81,7 @@ func RelaunchJob(c *gin.Context) {
 	}
 
 	// Check Inventory is exists
-	inventory, err := services.GetInventory(job.ID)
+	inventory, err := services.GetInventory(job.InventoryID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("Inventory %s is not exists with error %s", job.ID, err.Error()),
