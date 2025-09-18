@@ -365,3 +365,7 @@ func (m *MongoDB) ListAnsibleJob() ([]models.AnsibleJob, error) {
 	}	
 	return jobs, nil
 }
+
+func (m *MongoDB) Migration () error {
+	return nil
+}

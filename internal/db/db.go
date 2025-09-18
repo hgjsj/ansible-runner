@@ -17,6 +17,7 @@ type DBService interface {
 	DeleteInventory(id string) error
 	DeleteAnsibleJob(id string) error
 	CloseService()
+	Migration() error
 }
 
 var once sync.Once
