@@ -1,0 +1,332 @@
+basePath: /
+definitions:
+  api.JobResponse:
+    properties:
+      end_at:
+        type: string
+      id:
+        type: string
+      playbook:
+        type: string
+      start_at:
+        type: string
+      status:
+        type: string
+      stderr:
+        type: string
+      stdout:
+        type: string
+      step:
+        type: string
+    type: object
+  api.LaunchRequest:
+    properties:
+      inventory:
+        type: string
+      outputplugin:
+        type: string
+      playbook:
+        type: string
+    type: object
+  models.Group:
+    properties:
+      hosts:
+        items:
+          $ref: '#/definitions/models.Host'
+        type: array
+      name:
+        type: string
+      vars:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  models.Host:
+    properties:
+      name:
+        type: string
+      vars:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  models.Inventory:
+    properties:
+      groups:
+        items:
+          $ref: '#/definitions/models.Group'
+        type: array
+      id:
+        type: string
+      localhost:
+        $ref: '#/definitions/models.Host'
+      name:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: fu-qi.sun@dxc.com
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is an API server for managing and executing Ansible playbooks.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Ansible Runner API
+  version: "1.0"
+paths:
+  /inventory:
+    get:
+      description: Get a list of available inventories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Inventory'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List Inventories
+      tags:
+      - inventory
+    post:
+      consumes:
+      - application/json
+      description: Create a new inventory
+      parameters:
+      - description: Inventory to create
+        in: body
+        name: inventory
+        required: true
+        schema:
+          $ref: '#/definitions/models.Inventory'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Inventory'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create Inventory
+      tags:
+      - inventory
+  /inventory/{id}:
+    delete:
+      description: Delete an inventory by ID
+      parameters:
+      - description: Inventory ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete Inventory
+      tags:
+      - inventory
+    get:
+      description: Get details of an inventory by ID
+      parameters:
+      - description: Inventory ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Inventory'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get Inventory details
+      tags:
+      - inventory
+  /job:
+    get:
+      description: Get a list of all jobs
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/api.JobResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List all Jobs
+      tags:
+      - job
+  /job/{id}:
+    delete:
+      description: Delete a job by ID
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a Job
+      tags:
+      - job
+    get:
+      description: Get details of a job by ID
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.JobResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get Job details
+      tags:
+      - job
+  /job/{id}/relaunch:
+    post:
+      description: Relaunch a job by ID
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Relaunch a Job
+      tags:
+      - job
+  /playbook:
+    get:
+      description: Get a list of available playbooks
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                type: string
+              type: array
+            type: object
+      summary: List Playbooks
+      tags:
+      - playbook
+  /playbook/launch:
+    post:
+      consumes:
+      - application/json
+      description: Run a playbook with the specified inventory
+      parameters:
+      - description: Launch Request
+        in: body
+        name: launchRequest
+        required: true
+        schema:
+          $ref: '#/definitions/api.LaunchRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.JobResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Run Playbook
+      tags:
+      - playbook
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

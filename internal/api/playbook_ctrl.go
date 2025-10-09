@@ -22,6 +22,12 @@ type LaunchRequest struct {
 var playbookList []string = []string{"p4s_account_validate.yml"}
 
 // ListPlaybooks handles the listing of playbooks.
+// @Summary List Playbooks
+// @Description Get a list of available playbooks
+// @Tags playbook
+// @Produce json
+// @Success 200 {object} map[string][]string
+// @Router /playbook [get]
 func ListPlaybooks(c *gin.Context) {
 	utils.Log.Info("List playbook is ok and response")
 	c.JSON(http.StatusOK, gin.H{
@@ -30,6 +36,16 @@ func ListPlaybooks(c *gin.Context) {
 }
 
 // LaunchPlaybook handles the launch of a playbook.
+// @Summary Run Playbook
+// @Description Run a playbook with the specified inventory
+// @Tags playbook
+// @Accept json
+// @Produce json
+// @Param launchRequest body LaunchRequest true "Launch Request"
+// @Success 201 {object} JobResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /playbook/launch [post]
 func LaunchPlaybook(c *gin.Context) {
 	var requestBody LaunchRequest
 	if err := c.ShouldBindJSON(&requestBody); err != nil {

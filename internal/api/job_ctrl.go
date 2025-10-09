@@ -24,6 +24,14 @@ type JobResponse struct {
 }
 
 // GetJob handles the retrieval of a job.
+// @Summary Get Job details
+// @Description Get details of a job by ID
+// @Tags job
+// @Produce json
+// @Param id path string true "Job ID"
+// @Success 200 {object} JobResponse
+// @Failure 500 {object} map[string]string
+// @Router /job/{id} [get]
 func GetJob(c *gin.Context) {
 	id := c.Param("id")
 	job, err := services.GetJob(id)
@@ -42,6 +50,13 @@ func GetJob(c *gin.Context) {
 }
 
 // ListJobs handles the request to list jobs by job name.
+// @Summary List all Jobs	
+// @Description Get a list of all jobs
+// @Tags job
+// @Produce json
+// @Success 200 {array} JobResponse
+// @Failure 500 {object} map[string]string
+// @Router /job [get]
 func ListJobs(c *gin.Context) {
 	j, err := services.ListJobs()
 
@@ -59,6 +74,14 @@ func ListJobs(c *gin.Context) {
 	c.JSON(http.StatusOK, jobList)
 }
 
+// DeleteJob handles the request to delete a job.
+// @Summary Delete a Job
+// @Description Delete a job by ID
+// @Tags job
+// @Param id path string true "Job ID"
+// @Success 200 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /job/{id} [delete]
 func DeleteJob(c *gin.Context) {
 	id := c.Param("id")
 	err := services.DeleteJob(id)
@@ -71,6 +94,13 @@ func DeleteJob(c *gin.Context) {
 }
 
 // RelaunchJob handles the request to relaunch a job.
+// @Summary Relaunch a Job
+// @Description Relaunch a job by ID
+// @Tags job
+// @Param id path string true "Job ID"
+// @Success 200 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /job/{id}/relaunch [post]
 func RelaunchJob(c *gin.Context) {
 	id := c.Param("id")
 
