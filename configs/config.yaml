@@ -19,14 +19,14 @@ job:
 mongodb:
   uri: "mongodb://localhost:27017"
   user: ansiblerunner
-  password: 017c0141e4e1e7071b6a7513d0
+  password: ""
   database: "ansiblerunner"
   jobCollection: "ansiblejob"
   inventoryCollection: "ansibleinventory"
 legacy_db: PDC03-N1
 redis:
   uri: "localhost:6379"
-  password: 017c0141e4e1e7071b6a7513d0
+  password: ""
 ldap:
   server: "dcatlsecgc01.sec.entsvcs.com"
   port: 389
@@ -34,4 +34,4 @@ ldap:
   requiredGroup: "CN=TEAM_INT_PE-ESO4SAP"
 vault:
   uri: "https://205.239.15.9:30820"
-  token: 193e010ed2d4cd3933597d12ecf71250a22a62cb7913099e868d56eb4afb3e9007def307b91980d596ddd2590eb8c3b4c81bc3788a4262510ff0950083888d0ac833c37bb0587a7d0dedbee8462b24657b3059677bcab9a09a6adedaba307e
+  token: ""
